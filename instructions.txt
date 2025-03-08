@@ -1,19 +1,110 @@
 Project 
 
-StudyBuddy aims to transform learning for students. Shifting from standardized school education system, StudyBuddy allows students to learn at their own pace, stay organized, and stay engaged.
+StudyBuddy aims to transform learning for students. Shifting from standardized school education system, StudyBuddy allows students to 
+learn at their own pace, stay organized, and stay engaged.
 
-We see Artificial Intelligence as a tool that should be used to democratize knowledge rather than privatize it as a result person's background, race, income, etc.
+We see Artificial Intelligence as a tool that should be used to democratize knowledge rather than privatize it as a result person's 
+background, race, income, etc.
 
-Through the use of personalized AI tutors, syllabi, lesson plans, homework, and quizzes, we bring about a new way of learning that focuses on the preferences of each indivdual student.
+Through the use of personalized AI tutors, syllabi, lesson plans, homework, and quizzes, we bring about a new way of learning that 
+focuses on the preferences of each indivdual student.
 
-A hyper-personalized way of learning will allow all students regardless of how they study to have [equal access to the world's information]. 
+A hyper-personalized way of learning will allow all students regardless of how they study to have [equal access to the world's 
+information]. 
 
 Studying no longer has to be a boring chore. By using gamified elements, studying will be something that students look forward to.
 
-Backend
 
 
-Frontend
+
+
+
+Backend Development Process
+
+1. Data Acquisition and Preparation
+    Objective: Gather and preprocess educational content to train the AI tutor.​
+        Actions:
+        Web Scraping: Utilize tools like BeautifulSoup or Scrapy to collect syllabi, textbooks, and course materials from reputable educational websites.
+        Data Cleaning: Ensure the scraped data is accurate, relevant, and free from inconsistencies.
+        Storage: Organize the data in a structured format using databases such as MongoDB or PostgreSQL.
+
+
+2.  Develop the AI Tutor Model
+    Objective: Create an AI model capable of delivering personalized tutoring experiences.​
+        Actions:
+        Model Selection: Choose appropriate algorithms or frameworks (e.g., TensorFlow, PyTorch) suitable for natural language processing and educational content delivery.
+        Training: Train the model using the prepared datasets, ensuring it can adapt to various learning styles and paces.
+        Evaluation: Continuously assess the model's performance and make necessary adjustments to improve accuracy and responsiveness.
+
+3. Implement Spaced Repetition and Scheduling Algorithms
+    Objective: Enhance learning retention through optimized review schedules.​
+        Actions:
+        Algorithm Development: Design algorithms that determine optimal review intervals based on individual student performance.
+        Integration: Incorporate these algorithms into the AI tutor to provide personalized study plans and reminders.
+
+4. Develop Gamification Mechanics
+    Objective: Increase student engagement through game-like features.​
+        Actions:
+        Feature Design: Create elements such as points, badges, and leaderboards to motivate students.
+        Tracking System: Implement a system to monitor progress and award achievements based on predefined milestones.
+
+5. Set Up Backend Infrastructure
+    Objective: Establish a robust and scalable backend environment.​
+        Actions:
+        Server Setup: Configure servers using platforms like AWS, Azure, or Google Cloud to host the application.
+        Database Management: Ensure efficient data storage and retrieval systems are in place.
+        API Development: Create RESTful APIs to facilitate communication between the backend and frontend components.
+
+6. Testing and Quality Assurance
+    Objective: Ensure the backend components function correctly and efficiently.​
+        Actions:
+        Unit Testing: Test individual components for expected functionality.
+        Integration Testing: Verify that different modules work seamlessly together.
+        Performance Testing: Assess the system's responsiveness under various conditions.
+
+
+
+
+
+
+Frontend Development Process
+
+1. Design User Interface (UI) in Figma
+    Objective: Create a visually appealing and user-friendly interface.​
+        Actions:
+        Wireframing: Outline the basic structure and layout of the application.
+        Prototyping: Develop interactive prototypes to visualize user interactions.
+        User Feedback: Conduct usability testing sessions to gather insights and refine designs.
+
+2. Translate Figma Designs to Frontend Code
+    Objective: Implement the designed UI into a functional frontend application.​
+        Actions:
+        Select Framework: Choose a suitable frontend framework (e.g., React.js, Angular, Vue.js) based on project requirements.
+        Component Development: Develop reusable components corresponding to design elements.
+        Styling: Apply CSS or CSS-in-JS techniques to match the visual design accurately.
+
+3. Integrate Frontend with Backend
+    Objective: Ensure seamless communication between the user interface and backend services.​
+        Actions:
+        API Integration: Connect frontend components to backend APIs for data exchange.
+        State Management: Implement state management solutions (e.g., Redux, Vuex) to handle application state effectively.
+        Real-Time Features: Incorporate WebSocket or similar technologies for features requiring real-time updates.
+
+4. Implement Responsive Design
+    Objective: Ensure the application is accessible and functional across various devices and screen sizes.​
+        Actions:
+        Media Queries: Use CSS media queries to adjust layouts for different screen dimensions.
+        Flexible Grids: Employ flexible grid layouts to maintain consistency across devices.
+        Touch Interactions: Optimize touch targets and gestures for mobile users.
+
+5. Conduct Frontend Testing
+    Objective: Verify the frontend's functionality, performance, and compatibility.​
+        Actions:
+        Unit Testing: Test individual UI components for expected behavior.
+        End-to-End Testing: Simulate user interactions to ensure.
+
+
+
 
 
 
@@ -23,3 +114,14 @@ Ayen - Backend, Lead PM
 Samantha - Backend, Frontend, PM
 Mary - Designer, Frontend, PM
 Lizzie - Frontend, Backend, PM
+
+
+
+
+
+
+
+Just random instructions: Mary and Lizzie focus on designing and working on the frontend, 
+Samantha and Nicholas focus on scraping data, I will focus on the integration of Gemini, and 
+prompt engineering a tutor. But if we need help on each other's sections would love to help out and for the 
+team to also help out lol.
