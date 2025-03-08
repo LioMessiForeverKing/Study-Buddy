@@ -121,10 +121,33 @@ Lizzie - Frontend, Backend, PM
 
 
 
-Just random instructions: Mary and Lizzie focus on designing and working on the frontend, 
-Samantha and Nicholas focus on scraping data, I will focus on the integration of Gemini, and 
-prompt engineering a tutor. But if we need help on each other's sections would love to help out and for the 
-team to also help out lol.
+Team Assignments and Responsibilities:
+
+1. Frontend Development Team
+   - Primary: Mary, Lizzie
+   - Focus Areas:
+     * UI/UX Design
+     * Component Development
+     * Frontend Implementation
+
+2. Data Engineering Team
+   - Primary: Samantha, Nicholas
+   - Focus Areas:
+     * Web Scraping
+     * Data Processing
+     * Database Management
+
+3. AI Integration Team
+   - Primary: Ayen
+   - Focus Areas:
+     * Gemini Integration
+     * Prompt Engineering
+     * AI Tutor Development
+
+Cross-Team Collaboration:
+- All team members are encouraged to assist across different areas as needed
+- Regular knowledge sharing and support between teams
+- Flexible resource allocation based on project demands
 
 
 
