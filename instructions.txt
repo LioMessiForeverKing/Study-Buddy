@@ -1,5 +1,14 @@
 Project 
 
+StudyBuddy aims to transform learning for students. Shifting from standardized school education system, StudyBuddy allows students to learn at their own pace, stay organized, and stay engaged.
+
+We see Artificial Intelligence as a tool that should be used to democratize knowledge rather than privatize it as a result person's background, race, income, etc.
+
+Through the use of personalized AI tutors, syllabi, lesson plans, homework, and quizzes, we bring about a new way of learning that focuses on the preferences of each indivdual student.
+
+A hyper-personalized way of learning will allow all students regardless of how they study to have [equal access to the world's information]. 
+
+Studying no longer has to be a boring chore. By using gamified elements, studying will be something that students look forward to.
 
 Backend
 
