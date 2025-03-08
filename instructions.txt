@@ -1,0 +1,16 @@
+Project 
+
+
+Backend
+
+
+Frontend
+
+
+
+Member Roles:
+Nicholas - Backend, PM
+Ayen - Backend, Lead PM 
+Samantha - Backend, Frontend, PM
+Mary - Designer, Frontend, PM
+Lizzie - Frontend, Backend, PM
