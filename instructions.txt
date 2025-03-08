@@ -125,3 +125,41 @@ Just random instructions: Mary and Lizzie focus on designing and working on the 
 Samantha and Nicholas focus on scraping data, I will focus on the integration of Gemini, and 
 prompt engineering a tutor. But if we need help on each other's sections would love to help out and for the 
 team to also help out lol.
+
+
+
+Routing Specifications (Next.js 14)
+
+1. App Router Structure
+    The project follows Next.js 14 App Router conventions with the following organization:
+        - src/app/: Root directory for all routes (Think of this as the main folder where all our website pages live)
+        - (frontend)/: Route group for client-side components (This is like a special folder for things users see on their screen)
+        - api/: Directory for all backend API routes (This is where we put code that works behind the scenes)
+
+2. API Routes
+    Backend API endpoints follow the route.ts convention:
+        - GET/POST/PUT/DELETE handlers in route.ts files (These are like different ways to ask for or send information)
+        - Organized by feature in the api/ directory (We group similar features together)
+        - Supports dynamic API routes with [...param].ts pattern (We can create flexible paths that change based on what we need)
+        - Middleware.ts for API route protection and request handling (This is like a security guard checking requests)
+
+3. Frontend Routes
+    Client-side routes are organized under (frontend) group:
+        - Page components use page.tsx naming (Each webpage has its own file)
+        - Layouts defined in layout.tsx (This is like a template that many pages can share)
+        - Loading states with loading.tsx (Shows something while the page is getting ready)
+        - Error boundaries with error.tsx (Handles problems when things go wrong)
+        - Dynamic routes using [param] folder naming (Creates pages that can change based on what we need)
+
+4. Parallel Routes
+    Implementation of simultaneous routes using @folder convention:
+        - @dashboard/page.tsx for dashboard content (Shows multiple sections at once, like having split screens)
+        - @modal/page.tsx for modal overlays (Pop-up windows that appear over the main content)
+        - Supports independent loading states (Each section can load separately)
+
+5. Route Handlers
+    API endpoints utilize Next.js Route Handlers:
+        - Support for modern Edge Runtime (Makes websites faster by running code closer to users)
+        - Built-in middleware support (Helps manage and check requests automatically)
+        - Request/Response helpers from next/server (Tools that make handling web requests easier)
+        - Streaming responses for real-time features (Allows for live updates without refreshing the page)
