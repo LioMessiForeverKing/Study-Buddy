@@ -186,3 +186,14 @@ Routing Specifications (Next.js 14)
         - Built-in middleware support (Helps manage and check requests automatically)
         - Request/Response helpers from next/server (Tools that make handling web requests easier)
         - Streaming responses for real-time features (Allows for live updates without refreshing the page)
+
+
+
+
+How to run this project?
+- For people who do not have node installed, donwload node.
+- npm install (add node modules)
+- npm run dev (now you can run the project)
+
+
+-WHEN WE ARE USING LOCALHOST, ALL API KEYS NEED TO GO ON OUR LOCAL .ENV FILE.
