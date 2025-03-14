@@ -21,42 +21,22 @@ import {
 import { AddKidDialog } from "./add-kid-dialog"
 import { Badge } from "@/components/ui/badge"
 
-// Sample data for kids
-const initialKids = [
-  {
-    id: 1,
-    name: "Emma",
-    age: 8,
-    subjects: ["Math", "Science", "Reading"],
-    progress: 75,
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    learningStyle: "visual",
-    difficultyLevel: "intermediate",
-    learningPace: "standard",
-    interests: ["Science experiments", "Reading"],
-    currentLevel: {
-      Math: "intermediate",
-      Science: "beginner",
-      Reading: "advanced"
-    },
-  },
-  {
-    id: 2,
-    name: "Noah",
-    age: 10,
-    subjects: ["History", "Art", "Language"],
-    progress: 60,
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 3,
-    name: "Olivia",
-    age: 6,
-    subjects: ["Reading", "Writing", "Math"],
-    progress: 40,
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-  },
-]
+// Initialize with empty array for user-added profiles
+interface Kid {
+  id: number
+  name: string
+  age: number
+  subjects: string[]
+  progress: number
+  avatarUrl: string
+  learningStyle: string
+  difficultyLevel: string
+  learningPace: string
+  interests: string[]
+  currentLevel: Record<string, string>
+}
+
+const initialKids: Kid[] = []
 
 export function KidsPanel() {
   const [kids, setKids] = useState(initialKids)

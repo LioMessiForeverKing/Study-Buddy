@@ -60,13 +60,13 @@ export function AddLessonDialog({ onAddLesson, day }: AddLessonDialogProps) {
           Add Custom Lesson
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Add Custom Lesson</DialogTitle>
-            <DialogDescription>Add a custom lesson to {day}'s schedule.</DialogDescription>
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
+          <DialogHeader className="flex-none pb-6">
+            <DialogTitle className="text-center">Add Custom Lesson</DialogTitle>
+            <DialogDescription className="text-center">Add a custom lesson to {day}'s schedule.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="flex-1 overflow-y-auto space-y-6 px-1">
             <div className="grid gap-2">
               <Label htmlFor="subject">Subject</Label>
               <Select
