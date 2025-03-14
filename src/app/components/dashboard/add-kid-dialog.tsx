@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { processStudentProfile } from "@/routes/gemini-student-profile"
 
 interface AddKidDialogProps {
   onAddKid: (kid: {
@@ -48,10 +49,10 @@ export function AddKidDialog({ onAddKid }: AddKidDialogProps) {
     state: "AL"
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (newKid.name && newKid.age && newKid.subjects) {
-      onAddKid({
+      const studentData = {
         name: newKid.name,
         age: Number.parseInt(newKid.age),
         subjects: newKid.subjects.split(",").map((s) => s.trim()),
@@ -59,6 +60,17 @@ export function AddKidDialog({ onAddKid }: AddKidDialogProps) {
         difficultyLevel: newKid.difficultyLevel,
         learningPace: newKid.learningPace,
         interests: newKid.interests.split(",").map((s) => s.trim()),
+        currentLevel: newKid.subjects.split(",").reduce((acc, subject) => {
+          acc[subject.trim()] = newKid.difficultyLevel
+          return acc
+        }, {} as Record<string, string>)
+      }
+
+      // Process the student profile with Gemini AI
+      await processStudentProfile(studentData)
+
+      onAddKid({
+        ...studentData,
         gradeLevel: newKid.gradeLevel,
         state: newKid.state
       })
