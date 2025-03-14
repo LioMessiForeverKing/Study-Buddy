@@ -18,12 +18,17 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface AddKidDialogProps {
   onAddKid: (kid: {
     name: string
     age: number
     subjects: string[]
+    learningStyle: string
+    difficultyLevel: string
+    learningPace: string
+    interests: string[]
   }) => void
 }
 
@@ -33,6 +38,10 @@ export function AddKidDialog({ onAddKid }: AddKidDialogProps) {
     name: "",
     age: "",
     subjects: "",
+    learningStyle: "visual",
+    difficultyLevel: "beginner",
+    learningPace: "standard",
+    interests: ""
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,8 +51,20 @@ export function AddKidDialog({ onAddKid }: AddKidDialogProps) {
         name: newKid.name,
         age: Number.parseInt(newKid.age),
         subjects: newKid.subjects.split(",").map((s) => s.trim()),
+        learningStyle: newKid.learningStyle,
+        difficultyLevel: newKid.difficultyLevel,
+        learningPace: newKid.learningPace,
+        interests: newKid.interests.split(",").map((s) => s.trim())
       })
-      setNewKid({ name: "", age: "", subjects: "" })
+      setNewKid({
+        name: "",
+        age: "",
+        subjects: "",
+        learningStyle: "visual",
+        difficultyLevel: "beginner",
+        learningPace: "standard",
+        interests: ""
+      })
       setOpen(false)
     }
   }
@@ -95,6 +116,66 @@ export function AddKidDialog({ onAddKid }: AddKidDialogProps) {
                 placeholder="Math, Science, Reading, Art..."
                 className="resize-none"
                 required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="learningStyle">Learning Style</Label>
+              <Select
+
+                value={newKid.learningStyle}
+                onValueChange={(value: string) => setNewKid({ ...newKid, learningStyle: value })}
+              >
+                <SelectTrigger id="learningStyle">
+                  <SelectValue placeholder="Select learning style" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="visual">Visual</SelectItem>
+                  <SelectItem value="auditory">Auditory</SelectItem>
+                  <SelectItem value="reading">Reading/Writing</SelectItem>
+                  <SelectItem value="kinesthetic">Kinesthetic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="difficultyLevel">Initial Difficulty Level</Label>
+              <Select
+                value={newKid.difficultyLevel}
+                onValueChange={(value: string) => setNewKid({ ...newKid, difficultyLevel: value })}
+              >
+                <SelectTrigger id="difficultyLevel">
+                  <SelectValue placeholder="Select difficulty level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="learningPace">Learning Pace</Label>
+              <Select
+                value={newKid.learningPace}
+                onValueChange={(value: string) => setNewKid({ ...newKid, learningPace: value })}
+              >
+                <SelectTrigger id="learningPace">
+                  <SelectValue placeholder="Select learning pace" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="relaxed">Relaxed</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="accelerated">Accelerated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="interests">Interests (comma separated)</Label>
+              <Textarea
+                id="interests"
+                value={newKid.interests}
+                onChange={(e) => setNewKid({ ...newKid, interests: e.target.value })}
+                placeholder="Science experiments, Drawing, Music..."
+                className="resize-none"
               />
             </div>
           </div>

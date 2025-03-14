@@ -30,6 +30,15 @@ const initialKids = [
     subjects: ["Math", "Science", "Reading"],
     progress: 75,
     avatarUrl: "/placeholder.svg?height=40&width=40",
+    learningStyle: "visual",
+    difficultyLevel: "intermediate",
+    learningPace: "standard",
+    interests: ["Science experiments", "Reading"],
+    currentLevel: {
+      Math: "intermediate",
+      Science: "beginner",
+      Reading: "advanced"
+    },
   },
   {
     id: 2,
@@ -53,14 +62,29 @@ export function KidsPanel() {
   const [kids, setKids] = useState(initialKids)
   const [selectedKid, setSelectedKid] = useState(initialKids[0])
 
-  const handleAddKid = (newKid: any) => {
-    const newKidObj = {
+  interface Kid {
+  id: number
+  name: string
+  age: number
+  subjects: string[]
+  progress: number
+  avatarUrl: string
+  learningStyle: string
+  difficultyLevel: string
+  learningPace: string
+  interests: string[]
+  currentLevel: Record<string, string>
+}
+
+const handleAddKid = (newKid: Omit<Kid, 'id' | 'progress' | 'avatarUrl' | 'currentLevel'>) => {
+    const newKidObj: Kid = {
       id: kids.length + 1,
       ...newKid,
       progress: 0,
       avatarUrl: "/placeholder.svg?height=40&width=40",
+      currentLevel: Object.fromEntries(newKid.subjects.map(subject => [subject, newKid.difficultyLevel]))
     }
-    setKids([...kids, newKidObj])
+    setKids((prevKids) => [...prevKids, newKidObj as typeof initialKids[0]])
   }
 
   const handleDeleteKid = (id: number) => {
