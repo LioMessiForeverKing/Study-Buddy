@@ -17,8 +17,6 @@ Studying no longer has to be a boring chore. By using gamified elements, studyin
 
 
 
-
-
 Backend Development Process
 
 1. Data Acquisition and Preparation
