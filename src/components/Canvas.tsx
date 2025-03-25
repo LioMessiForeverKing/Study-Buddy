@@ -37,8 +37,11 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
     if (!canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    // Calculate position with scaling factor to account for any CSS transformations
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
 
     setIsDrawing(true)
     setPrevPoint({ x, y })
@@ -54,9 +57,12 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
     if (!context) return
 
     const rect = canvas.getBoundingClientRect()
+    // Apply the same scaling factor for consistent drawing
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
     const currentPoint = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
     }
 
     if (prevPoint) {
@@ -87,6 +93,44 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
 
     context.fillStyle = "#ffffff"
     context.fillRect(0, 0, canvas.width, canvas.height)
+  }
+
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysis, setAnalysis] = useState<string | null>(null)
+  const [question, setQuestion] = useState('What is the solution to this equation?')
+
+  const askGemini = async () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    try {
+      setIsAnalyzing(true)
+      setAnalysis(null)
+      
+      // Convert canvas to base64 image data
+      const imageData = canvas.toDataURL('image/png')
+      
+      // Send to Gemini API
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageData, question }),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to analyze image')
+      }
+      
+      const data = await response.json()
+      setAnalysis(data.analysis)
+    } catch (error) {
+      console.error('Error analyzing image:', error)
+      setAnalysis('Error analyzing image. Please try again.')
+    } finally {
+      setIsAnalyzing(false)
+    }
   }
 
   return (
@@ -125,6 +169,13 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
         >
           Clear
         </button>
+        <button
+          onClick={askGemini}
+          disabled={isAnalyzing}
+          className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+        >
+          {isAnalyzing ? 'Analyzing...' : 'Ask Gemini'}
+        </button>
       </div>
       <canvas
         ref={canvasRef}
@@ -137,6 +188,12 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
         className={`border border-border rounded-md cursor-crosshair ${className}`}
         style={{ backgroundColor: '#ffffff' }}
       />
+      {analysis && (
+        <div className="mt-4 p-4 bg-card border border-border rounded-md">
+          <h3 className="text-lg font-medium mb-2">Gemini Analysis</h3>
+          <p className="text-sm whitespace-pre-wrap">{analysis}</p>
+        </div>
+      )}
     </div>
   )
 }
