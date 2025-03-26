@@ -2,15 +2,12 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/ge
 
 export async function POST(request: Request) {
   try {
-    // Get the API key from environment variables
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Hardcoded API key for testing purposes only
+    // TODO: Remove this hardcoded key and use environment variables in production
+    const apiKey = "AIzaSyCPqcdHwQ6V8kSl1hQ4k1pMzB7wAHi6S-4";
     
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "API key not found" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    // Uncomment the line below to use environment variables instead
+    // const apiKey = process.env.GEMINI_API_KEY;
 
     // Initialize the Gemini API client
     const genAI = new GoogleGenerativeAI(apiKey);

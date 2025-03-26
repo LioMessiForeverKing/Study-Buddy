@@ -1,6 +1,7 @@
-"use client"
+'use client'
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from 'react'
+import { marked } from 'marked';
 
 interface Point {
   x: number
@@ -13,23 +14,26 @@ interface CanvasProps {
   className?: string
 }
 
-export function Canvas({ width = 800, height = 600, className = "" }: CanvasProps) {
+export function Canvas({ width = 800, height = 600, className = '' }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
-  const [color, setColor] = useState("#000000")
+  const [color, setColor] = useState('#000000')
   const [brushSize, setBrushSize] = useState(5)
+  const [isEraser, setIsEraser] = useState(false)
   const [prevPoint, setPrevPoint] = useState<Point | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysis, setAnalysis] = useState<string | null>(null)
+  const [question, setQuestion] = useState('What is the solution to this equation?')
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const context = canvas.getContext("2d")
-    if (!context) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    // Set canvas background to white
-    context.fillStyle = "#ffffff"
-    context.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
   }, [])
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -37,7 +41,6 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
     if (!canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    // Calculate position with scaling factor to account for any CSS transformations
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
     const x = (e.clientX - rect.left) * scaleX
@@ -49,15 +52,13 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return
-
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const context = canvas.getContext("2d")
-    if (!context) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
     const rect = canvas.getBoundingClientRect()
-    // Apply the same scaling factor for consistent drawing
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
     const currentPoint = {
@@ -66,14 +67,14 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
     }
 
     if (prevPoint) {
-      context.beginPath()
-      context.moveTo(prevPoint.x, prevPoint.y)
-      context.lineTo(currentPoint.x, currentPoint.y)
-      context.strokeStyle = color
-      context.lineWidth = brushSize
-      context.lineCap = "round"
-      context.lineJoin = "round"
-      context.stroke()
+      ctx.beginPath()
+      ctx.moveTo(prevPoint.x, prevPoint.y)
+      ctx.lineTo(currentPoint.x, currentPoint.y)
+      ctx.strokeStyle = isEraser ? '#ffffff' : color
+      ctx.lineWidth = brushSize
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      ctx.stroke()
     }
 
     setPrevPoint(currentPoint)
@@ -88,45 +89,44 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const context = canvas.getContext("2d")
-    if (!context) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    context.fillStyle = "#ffffff"
-    context.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
   }
-
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysis, setAnalysis] = useState<string | null>(null)
-  const [question, setQuestion] = useState('What is the solution to this equation?')
 
   const askGemini = async () => {
     const canvas = canvasRef.current
     if (!canvas) return
-
+  
     try {
       setIsAnalyzing(true)
       setAnalysis(null)
-      
-      // Convert canvas to base64 image data
+  
       const imageData = canvas.toDataURL('image/png')
-      
-      // Send to Gemini API
+  
       const response = await fetch('/api/gemini', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageData, question }),
       })
-      
-      if (!response.ok) {
-        throw new Error('Failed to analyze image')
-      }
-      
+  
+      if (!response.ok) throw new Error('Failed to analyze image')
       const data = await response.json()
-      setAnalysis(data.analysis)
-    } catch (error) {
-      console.error('Error analyzing image:', error)
+  
+      // ✅ Await the result of marked
+      const raw = data.analysis.replace(
+        'Final Answer: The final answer is $\\boxed{4i, -4i}$',
+        `### ✅ Final Answer
+      
+      > \\[ \\boxed{4i}, \\boxed{-4i} \\]
+      `
+      )
+      const formattedAnalysis = await marked(raw)
+      setAnalysis(formattedAnalysis)
+    } catch (err) {
+      console.error(err)
       setAnalysis('Error analyzing image. Please try again.')
     } finally {
       setIsAnalyzing(false)
@@ -135,48 +135,62 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4 mb-2">
+      {/* Control Panel */}
+      <div className="flex flex-wrap items-center gap-4 mb-2">
         <div className="flex items-center gap-2">
-          <label htmlFor="color" className="text-sm font-medium">
-            Color:
-          </label>
+          <label htmlFor="color" className="text-sm font-medium">Color:</label>
           <input
             type="color"
             id="color"
             value={color}
+            disabled={isEraser}
             onChange={(e) => setColor(e.target.value)}
-            className="w-8 h-8 border border-border rounded cursor-pointer"
+            className="w-8 h-8 border rounded cursor-pointer"
           />
         </div>
+
         <div className="flex items-center gap-2">
-          <label htmlFor="brushSize" className="text-sm font-medium">
-            Brush Size:
-          </label>
+          <label htmlFor="brushSize" className="text-sm font-medium">Brush:</label>
           <input
             type="range"
             id="brushSize"
             min="1"
-            max="20"
+            max="30"
             value={brushSize}
             onChange={(e) => setBrushSize(parseInt(e.target.value))}
             className="w-32"
           />
           <span className="text-sm">{brushSize}px</span>
         </div>
+
+        <button
+          onClick={() => setIsEraser(!isEraser)}
+          className={`px-3 py-1 text-sm rounded-md transition ${
+            isEraser
+              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          }`}
+        >
+          {isEraser ? 'Eraser ON' : 'Eraser OFF'}
+        </button>
+
         <button
           onClick={clearCanvas}
-          className="px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90"
+          className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600"
         >
           Clear
         </button>
+
         <button
           onClick={askGemini}
           disabled={isAnalyzing}
-          className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+          className="ml-auto px-3 py-1 text-sm bg-gradient-to-r from-[#4285F4] to-[#34A853] text-white rounded-md hover:from-[#FBBC05] hover:to-[#EA4335] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAnalyzing ? 'Analyzing...' : 'Ask Gemini'}
         </button>
       </div>
+
+      {/* Canvas Element */}
       <canvas
         ref={canvasRef}
         width={width}
@@ -185,13 +199,16 @@ export function Canvas({ width = 800, height = 600, className = "" }: CanvasProp
         onMouseMove={draw}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
-        className={`border border-border rounded-md cursor-crosshair ${className}`}
+        className={`rounded-xl border border-gray-300 ${className}`}
         style={{ backgroundColor: '#ffffff' }}
       />
+
+      {/* Gemini Result */}
       {analysis && (
-        <div className="mt-4 p-4 bg-card border border-border rounded-md">
-          <h3 className="text-lg font-medium mb-2">Gemini Analysis</h3>
-          <p className="text-sm whitespace-pre-wrap">{analysis}</p>
+        <div className="mt-4 p-4 bg-white/80 backdrop-blur border border-gray-300 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-2">Gemini Analysis</h3>
+          {/* Render formatted analysis as HTML */}
+          <div className="text-sm" dangerouslySetInnerHTML={{ __html: analysis }} />
         </div>
       )}
     </div>
