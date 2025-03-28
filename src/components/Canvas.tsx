@@ -30,20 +30,33 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
   const [prevPoint, setPrevPoint] = useState<Point | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState<string | null>(null)
-  const [question, setQuestion] = useState('What is the solution to this equation?')
+  const [question, setQuestion] = useState('Act like my friend, and talk to me in GenZ language, and make any analogies I tell you to make and answer any quesiton I am having trouble with?')
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([])
+  const [isSpeaking, setIsSpeaking] = useState(false)
 
+  // Function to speak text using Web Speech API
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel()
+
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.onend = () => setIsSpeaking(false)
+      utterance.onstart = () => setIsSpeaking(true)
+      window.speechSynthesis.speak(utterance)
+    }
+  }
+
+  // Update handleAudioSubmit to use speech synthesis
   const handleAudioSubmit = async (audioData: string, mimeType: string) => {
     try {
       setIsProcessingAudio(true)
       setAnalysis(null)
       
-      // Get canvas data to send along with audio
       const canvas = canvasRef.current
       const canvasData = canvas ? canvas.toDataURL('image/png') : null
       
-      // Add the current question to conversation history
       const updatedHistory = [...conversationHistory, { role: 'user', content: question }]
       setConversationHistory(updatedHistory)
 
@@ -55,7 +68,7 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
           mimeType,
           prompt: question,
           canvasData,
-          history: updatedHistory // Pass conversation history to API
+          history: updatedHistory
         })
       })
 
@@ -64,8 +77,10 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
       const formattedAnalysis = await marked(data.analysis)
       setAnalysis(formattedAnalysis)
       
-      // Add Gemini's response to conversation history
       setConversationHistory([...updatedHistory, { role: 'assistant', content: data.analysis }])
+      
+      // Speak the response
+      speakText(data.analysis)
     } catch (error) {
       console.error('Error processing audio:', error)
       setAnalysis('Error processing audio. Please try again.')
@@ -155,7 +170,6 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
   
       const imageData = canvas.toDataURL('image/png')
       
-      // Add the current question to conversation history
       const updatedHistory = [...conversationHistory, { role: 'user', content: question }]
       setConversationHistory(updatedHistory)
   
@@ -165,26 +179,27 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
         body: JSON.stringify({ 
           imageData, 
           question,
-          history: updatedHistory // Pass conversation history to API
+          history: updatedHistory
         }),
       })
   
       if (!response.ok) throw new Error('Failed to analyze image')
       const data = await response.json()
   
-      // ✅ Await the result of marked
       const raw = data.analysis.replace(
         'Final Answer: The final answer is $\\boxed{4i, -4i}$',
         `### ✅ Final Answer
       
-      > \\[ \\boxed{4i}, \\boxed{-4i} \\]
+      > \[ \boxed{4i}, \boxed{-4i} \]
       `
       )
       const formattedAnalysis = await marked(raw)
       setAnalysis(formattedAnalysis)
       
-      // Add Gemini's response to conversation history
       setConversationHistory([...updatedHistory, { role: 'assistant', content: data.analysis }])
+      
+      // Speak the response
+      speakText(data.analysis)
     } catch (err) {
       console.error(err)
       setAnalysis('Error analyzing image. Please try again.')
