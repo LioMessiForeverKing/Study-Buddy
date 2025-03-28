@@ -1,13 +1,16 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleAIFileManager } from '@google/generative-ai/server';
+import fs from 'fs';
 
 export async function POST(request: Request) {
   try {
-    // Hardcoded API key for testing purposes only
-    // TODO: Remove this hardcoded key and use environment variables in production
-    const apiKey = "AIzaSyCPqcdHwQ6V8kSl1hQ4k1pMzB7wAHi6S-4";
+    const apiKey = 'AIzaSyDB5uL5w8v3ijAdg40ZTfW9K9iM6Bsgzrg'
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY environment variable is not set');
+    }
     
-    // Uncomment the line below to use environment variables instead
-    // const apiKey = process.env.GEMINI_API_KEY;
+    // Initialize file manager for uploading files
+    const fileManager = new GoogleAIFileManager(apiKey);
 
     // Initialize the Gemini API client
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -24,8 +27,8 @@ export async function POST(request: Request) {
       responseMimeType: "text/plain",
     };
 
-    // Get the image data from the request
-    const { imageData, question } = await request.json();
+    // Get the image data and conversation history from the request
+    const { imageData, question, history = [] } = await request.json();
     
     if (!imageData) {
       return new Response(JSON.stringify({ error: "No image data provided" }), {
@@ -36,20 +39,39 @@ export async function POST(request: Request) {
 
     // Remove the data URL prefix to get just the base64 data
     const base64Data = imageData.split(',')[1];
-
-    // Start a chat session
+    
+    // Upload the image to Gemini using file upload mechanism
+    const tempFilePath = `/tmp/canvas-${Date.now()}.png`;
+    fs.writeFileSync(tempFilePath, Buffer.from(base64Data, 'base64'));
+    
+    // Upload to Gemini
+    const uploadResult = await fileManager.uploadFile(tempFilePath, {
+      mimeType: "image/png",
+      displayName: `canvas-${Date.now()}`,
+    });
+    
+    // Clean up temp file
+    fs.unlinkSync(tempFilePath);
+    
+    // Format conversation history for Gemini API
+    const formattedHistory = history.map((msg: { role: string; content: string }) => ({
+      role: msg.role === 'assistant' ? 'model' : msg.role,
+      parts: [{ text: msg.content }]
+    }));
+    
+    // Start a chat session with conversation history
     const chatSession = model.startChat({
       generationConfig,
-      history: [],
+      history: formattedHistory,
     });
 
-    // Send the image to Gemini with a prompt
+    // Send the image to Gemini with a prompt using fileData instead of inlineData
     const result = await chatSession.sendMessage([
       { text: question },
       {
-        inlineData: {
+        fileData: {
           mimeType: "image/png",
-          data: base64Data
+          fileUri: uploadResult.file.uri
         }
       }
     ]);

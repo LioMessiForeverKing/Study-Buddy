@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { AudioRecorder } from './AudioRecorder'
 import { marked } from 'marked';
 
 interface Point {
@@ -14,6 +15,12 @@ interface CanvasProps {
   className?: string
 }
 
+// Define a type for conversation messages
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export function Canvas({ width = 800, height = 600, className = '' }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -24,6 +31,48 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [question, setQuestion] = useState('What is the solution to this equation?')
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false)
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([])
+
+  const handleAudioSubmit = async (audioData: string, mimeType: string) => {
+    try {
+      setIsProcessingAudio(true)
+      setAnalysis(null)
+      
+      // Get canvas data to send along with audio
+      const canvas = canvasRef.current
+      const canvasData = canvas ? canvas.toDataURL('image/png') : null
+      
+      // Add the current question to conversation history
+      const updatedHistory = [...conversationHistory, { role: 'user', content: question }]
+      setConversationHistory(updatedHistory)
+
+      const response = await fetch('/api/audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audioData,
+          mimeType,
+          prompt: question,
+          canvasData,
+          history: updatedHistory // Pass conversation history to API
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to process audio')
+      const data = await response.json()
+      const formattedAnalysis = await marked(data.analysis)
+      setAnalysis(formattedAnalysis)
+      
+      // Add Gemini's response to conversation history
+      setConversationHistory([...updatedHistory, { role: 'assistant', content: data.analysis }])
+    } catch (error) {
+      console.error('Error processing audio:', error)
+      setAnalysis('Error processing audio. Please try again.')
+    } finally {
+      setIsProcessingAudio(false)
+    }
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -105,11 +154,19 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
       setAnalysis(null)
   
       const imageData = canvas.toDataURL('image/png')
+      
+      // Add the current question to conversation history
+      const updatedHistory = [...conversationHistory, { role: 'user', content: question }]
+      setConversationHistory(updatedHistory)
   
       const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageData, question }),
+        body: JSON.stringify({ 
+          imageData, 
+          question,
+          history: updatedHistory // Pass conversation history to API
+        }),
       })
   
       if (!response.ok) throw new Error('Failed to analyze image')
@@ -125,6 +182,9 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
       )
       const formattedAnalysis = await marked(raw)
       setAnalysis(formattedAnalysis)
+      
+      // Add Gemini's response to conversation history
+      setConversationHistory([...updatedHistory, { role: 'assistant', content: data.analysis }])
     } catch (err) {
       console.error(err)
       setAnalysis('Error analyzing image. Please try again.')
@@ -136,7 +196,8 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
   return (
     <div className="flex flex-col gap-4">
       {/* Control Panel */}
-      <div className="flex flex-wrap items-center gap-4 mb-2">
+      <div className="flex flex-col gap-4 mb-2">
+        <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <label htmlFor="color" className="text-sm font-medium">Color:</label>
           <input
@@ -180,6 +241,13 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
         >
           Clear
         </button>
+        
+        <button
+          onClick={() => setConversationHistory([])}
+          className="px-3 py-1 text-sm bg-purple-500 text-white rounded-md hover:bg-purple-600"
+        >
+          Reset Conversation
+        </button>
 
         <button
           onClick={askGemini}
@@ -188,6 +256,8 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
         >
           {isAnalyzing ? 'Analyzing...' : 'Ask Gemini'}
         </button>
+        </div>
+        <AudioRecorder onAudioSubmit={handleAudioSubmit} />
       </div>
 
       {/* Canvas Element */}
@@ -203,6 +273,29 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
         style={{ backgroundColor: '#ffffff' }}
       />
 
+      {/* Conversation History */}
+      {conversationHistory.length > 0 && (
+        <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold">Conversation History</h3>
+            <button 
+              onClick={() => setConversationHistory([])} 
+              className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            >
+              Clear History
+            </button>
+          </div>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {conversationHistory.map((msg, index) => (
+              <div key={index} className={`p-2 rounded ${msg.role === 'user' ? 'bg-blue-50 border-blue-100' : 'bg-green-50 border-green-100'} border`}>
+                <p className="text-xs font-semibold mb-1">{msg.role === 'user' ? 'You' : 'Gemini'}</p>
+                <p className="text-sm">{msg.content}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       {/* Gemini Result */}
       {analysis && (
         <div className="mt-4 p-4 bg-white/80 backdrop-blur border border-gray-300 rounded-lg shadow">

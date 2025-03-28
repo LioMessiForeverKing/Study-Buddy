@@ -2,12 +2,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(request: Request) {
   try {
-    // Hardcoded API key for testing purposes only
-    // TODO: Remove this hardcoded key and use environment variables in production
-    const apiKey = "AIzaSyCPqcdHwQ6V8kSl1hQ4k1pMzB7wAHi6S-4";
-    
-    // Uncomment the line below to use environment variables instead
-    // const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = 'AIzaSyDB5uL5w8v3ijAdg40ZTfW9K9iM6Bsgzrg';
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY environment variable is not set');
+    }
 
     // Initialize the Gemini API client
     const genAI = new GoogleGenerativeAI(apiKey);

@@ -27,7 +27,7 @@ export default function DashboardPage() {
             Your Smart Workspace
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl">
-            An intelligent education board powered by AI. Sketch ideas, explain concepts, and bring learning to life — beautifully.
+            Your AI Tutor Yubi. Our goal is to make you Yubi.
           </p>
         </div>
 
