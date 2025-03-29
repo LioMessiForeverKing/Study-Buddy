@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
+import Image from 'next/image'
 
 export default function HomePage() {
   const router = useRouter()
@@ -79,6 +80,11 @@ export default function HomePage() {
 
   return (
     <main className="relative min-h-screen flex items-center justify-center text-gray-800 overflow-hidden bg-white">
+      {/* Yubi Logo */}
+      <div className="absolute top-0 left-0 z-20 h-180 w-180">
+        <Image src="/Yubi1.svg" alt="Yubi Logo" width={500} height={500} className="hover:scale-105 transition-transform" />
+      </div>
+
       {/* Canvas Particles */}
       <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
 
@@ -105,11 +111,11 @@ export default function HomePage() {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          Cogni
+          Study Buddy
         </h1>
 
         <p className="text-lg md:text-xl text-center text-gray-700 mb-10 leading-relaxed">
-          Welcome to <span className="font-semibold text-black">Cogni</span> — a Google-inspired AI platform blending smart learning, vibrant visuals, and futuristic interaction.
+          Welcome to <span className="font-semibold text-black">Study Buddy</span> — your AI Notetaker, and reinforcement learning assistant.
         </p>
 
         <div className="flex justify-center">
@@ -123,7 +129,7 @@ export default function HomePage() {
         </div>
 
         <div className="mt-10 text-sm text-center text-gray-500">
-          v1.0.0 – Gradient powered by Google
+          v1.0.0 – Powered by Yubi.
         </div>
       </div>
     </main>
