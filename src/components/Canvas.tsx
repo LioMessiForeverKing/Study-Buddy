@@ -30,7 +30,7 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
   const [prevPoint, setPrevPoint] = useState<Point | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState<string | null>(null)
-  const [question, setQuestion] = useState('Act like my friend, and talk to me in GenZ language, and make any analogies I tell you to make and answer any quesiton I am having trouble with?')
+  const [question, setQuestion] = useState('Your name is Yubi. You are an excellent AI Tutor, who needs to tap into humans human side. So you need to talk to him/her like a friend. Someone they can trust, someone they will listen to. Whatever the user asks from you, you have to answer, and imagine that the user is struggling, and wants to learn, so dont just give him/her answers; I need you to push him or her.')
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([])
   const [isSpeaking, setIsSpeaking] = useState(false)
