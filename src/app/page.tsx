@@ -248,20 +248,23 @@ export default function HomePage() {
                 Discover the future of learning with <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#4285F4] to-[#34A853]">Study Buddy</span> — your intelligent AI companion for enhanced learning and productivity.
               </p>
 
-              <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-md relative z-50">
+              <div className="flex flex-col sm:flex-row justify-center gap-6 w-full max-w-md mx-auto relative z-50">
                   <button
                     onClick={() => router.push('/notepad')}
-                    className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-lg font-medium text-white bg-gradient-to-r from-[#4285F4] via-[#34A853] to-[#FBBC05] hover:from-[#EA4335] hover:via-[#FBBC05] hover:to-[#4285F4] transition-all duration-500 shadow-lg hover:shadow-[0_10px_30px_-10px_rgba(66,133,244,0.5)] hover:scale-105 group flex-1"
+                    className="group relative flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-medium text-white overflow-hidden backdrop-blur-lg transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgb(66,133,244,0.3)] before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#4CAF50] before:via-[#2196F3] before:to-[#FFC107] before:transition-all before:duration-500 hover:before:bg-gradient-to-r hover:before:from-[#FF9800] hover:before:via-[#FF5722] hover:before:to-[#F44336] before:animate-gradient-x"
                   >
-                    Launch NotePad
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <span className="relative flex items-center gap-2">
+                      Launch NotePad
+                      <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                    </span>
                   </button>
                   <button
                     onClick={() => router.push('/auth')}
-                    className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-lg font-medium bg-white border border-gray-200 hover:border-gray-300 text-gray-700 transition-all duration-500 shadow-lg hover:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] hover:scale-105 group flex-1"
+                    className="group relative flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-lg font-medium text-white overflow-hidden backdrop-blur-lg transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgb(66,133,244,0.3)] before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#4CAF50] before:via-[#2196F3] before:to-[#FFC107] before:transition-all before:duration-500 hover:before:bg-gradient-to-r hover:before:from-[#FF9800] hover:before:via-[#FF5722] hover:before:to-[#F44336] before:animate-gradient-x"
                   >
-                    <Image src="/google.svg" alt="Google Logo" width={20} height={20} className="w-5 h-5" />
-                    <span className="whitespace-nowrap">Sign in with Google</span>
+                    <span className="relative flex items-center gap-2">
+                      Try Us Out. Yubi is waiting!
+                    </span>
                   </button>
                 </div>
 
