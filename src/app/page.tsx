@@ -228,10 +228,10 @@ export default function HomePage() {
         </div>
 
         {/* Content Container */}
-        <div className="relative z-10 flex flex-col">
+        <div className="relative z-30 flex flex-col">
           {/* Hero Section */}
           <div className="min-h-screen flex items-center justify-center">
-            <div className="hero-content w-full max-w-3xl px-8 py-14 rounded-3xl shadow-2xl border border-white/40 backdrop-blur-xl bg-white/70 transition-all duration-700 ease-out hover:shadow-[0_20px_60px_-10px_rgba(66,133,244,0.3)] hover:border-[#4285F4]/30 hover:scale-[1.05] hover:rotate-1">
+            <div className="hero-content relative z-40 w-full max-w-3xl px-8 py-14 rounded-3xl shadow-2xl border border-white/40 backdrop-blur-xl bg-white/70 transition-all duration-700 ease-out hover:shadow-[0_20px_60px_-10px_rgba(66,133,244,0.3)] hover:border-[#4285F4]/30 hover:scale-[1.05] hover:rotate-1">
               <h1
                 className="text-6xl md:text-7xl font-extrabold text-center mb-6 tracking-tight"
                 style={{
@@ -248,15 +248,22 @@ export default function HomePage() {
                 Discover the future of learning with <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#4285F4] to-[#34A853]">Study Buddy</span> — your intelligent AI companion for enhanced learning and productivity.
               </p>
 
-              <div className="flex justify-center">
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-lg font-medium text-white bg-gradient-to-r from-[#4285F4] via-[#34A853] to-[#FBBC05] hover:from-[#EA4335] hover:via-[#FBBC05] hover:to-[#4285F4] transition-all duration-500 shadow-lg hover:shadow-[0_10px_30px_-10px_rgba(66,133,244,0.5)] hover:scale-105 group"
-                >
-                  Launch Dashboard
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
+              <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-md relative z-50">
+                  <button
+                    onClick={() => router.push('/notepad')}
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-lg font-medium text-white bg-gradient-to-r from-[#4285F4] via-[#34A853] to-[#FBBC05] hover:from-[#EA4335] hover:via-[#FBBC05] hover:to-[#4285F4] transition-all duration-500 shadow-lg hover:shadow-[0_10px_30px_-10px_rgba(66,133,244,0.5)] hover:scale-105 group flex-1"
+                  >
+                    Launch NotePad
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                  <button
+                    onClick={() => router.push('/auth')}
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-lg font-medium bg-white border border-gray-200 hover:border-gray-300 text-gray-700 transition-all duration-500 shadow-lg hover:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] hover:scale-105 group flex-1"
+                  >
+                    <Image src="/google.svg" alt="Google Logo" width={20} height={20} className="w-5 h-5" />
+                    <span className="whitespace-nowrap">Sign in with Google</span>
+                  </button>
+                </div>
 
               <div className="mt-10 text-sm text-center text-gray-500">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#4285F4] to-[#34A853]">v1.0.0</span> – Powered by Yubi with Google's Innovation

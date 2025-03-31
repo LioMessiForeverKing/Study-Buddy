@@ -2,7 +2,7 @@
 
 import { DrawingBoard } from '@/components/DrawingBoard'
 
-export default function DashboardPage() {
+export default function NotePad() {
   return (
     <main className="relative min-h-screen bg-white text-gray-800 overflow-hidden">
       {/* Animated Google Gradient Background */}
