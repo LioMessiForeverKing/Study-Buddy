@@ -1,7 +1,17 @@
 import './globals.css'
-import { Inter } from 'next/font/google'
+import { Inter, Roboto } from 'next/font/google'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  weight: ['400', '500', '700'],
+  subsets: ['latin'],
+  variable: '--font-google-sans',
+})
+
+const roboto = Roboto({
+  weight: ['400', '500', '700'],
+  subsets: ['latin'],
+  variable: '--font-roboto',
+})
 
 export const metadata = {
   title: 'Study Buddy | Futuristic Learning',
@@ -15,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`${inter.variable} ${roboto.variable} font-sans`}>{children}</body>
     </html>
   )
 }
