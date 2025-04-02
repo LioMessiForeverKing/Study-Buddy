@@ -35,16 +35,27 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([])
   const [isSpeaking, setIsSpeaking] = useState(false)
 
-  // Function to speak text using Web Speech API
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel()
+  // Function to speak text using Eleven Labs API
+  const speakText = async (text: string) => {
+    try {
+      setIsSpeaking(true)
+      const response = await fetch('/api/text-to-speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      })
 
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.onend = () => setIsSpeaking(false)
-      utterance.onstart = () => setIsSpeaking(true)
-      window.speechSynthesis.speak(utterance)
+      if (!response.ok) throw new Error('Failed to generate speech')
+      
+      const { audioData, format } = await response.json()
+      
+      // Create and play audio
+      const audio = new Audio(`data:${format};base64,${audioData}`)
+      audio.onended = () => setIsSpeaking(false)
+      await audio.play()
+    } catch (error) {
+      console.error('Error playing speech:', error)
+      setIsSpeaking(false)
     }
   }
 
