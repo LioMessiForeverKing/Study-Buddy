@@ -1,6 +1,6 @@
 'use client'
 
-import { DrawingBoard } from '@/components/DrawingBoard'
+import { ChapterManager } from '@/components/ChapterManager'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 
 export default function NotePad() {
@@ -33,9 +33,9 @@ export default function NotePad() {
           </p>
         </div>
 
-        {/* Glassmorphic DrawingBoard Wrapper */}
+        {/* Glassmorphic ChapterManager Wrapper */}
         <div className="relative bg-white/70 backdrop-blur-xl border border-white/30 shadow-xl rounded-3xl p-6 md:p-8 transition-all duration-300 hover:shadow-2xl">
-          <DrawingBoard />
+          <ChapterManager />
         </div>
       </section>
     </main>

@@ -229,7 +229,7 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
           <input
             type="color"
             id="color"
-            value={color}
+          value={color}
             disabled={isEraser}
             onChange={(e) => setColor(e.target.value)}
             className="w-8 h-8 border rounded cursor-pointer"
