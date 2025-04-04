@@ -248,7 +248,7 @@ export default function HomePage() {
                 Discover the future of learning with <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#4285F4] to-[#34A853]">Study Buddy</span> — your intelligent AI companion for enhanced learning and productivity.
               </p>
 
-              <div className="flex flex-col sm:flex-row justify-center gap-6 w-full max-w-md mx-auto relative z-50">
+              <div className="flex justify-center w-full max-w-md mx-auto relative z-50">
                   <button
                     onClick={() => router.push('/notepad')}
                     className="group relative flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-medium text-white overflow-hidden backdrop-blur-lg transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgb(66,133,244,0.3)] before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#4CAF50] before:via-[#2196F3] before:to-[#FFC107] before:transition-all before:duration-500 hover:before:bg-gradient-to-r hover:before:from-[#FF9800] hover:before:via-[#FF5722] hover:before:to-[#F44336] before:animate-gradient-x"
@@ -256,14 +256,6 @@ export default function HomePage() {
                     <span className="relative flex items-center gap-2">
                       Launch NotePad
                       <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => router.push('/auth')}
-                    className="group relative flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-lg font-medium text-white overflow-hidden backdrop-blur-lg transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgb(66,133,244,0.3)] before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#4CAF50] before:via-[#2196F3] before:to-[#FFC107] before:transition-all before:duration-500 hover:before:bg-gradient-to-r hover:before:from-[#FF9800] hover:before:via-[#FF5722] hover:before:to-[#F44336] before:animate-gradient-x"
-                  >
-                    <span className="relative flex items-center gap-2">
-                      Try Us Out. Yubi is waiting!
                     </span>
                   </button>
                 </div>
