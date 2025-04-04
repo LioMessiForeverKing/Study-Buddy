@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { ChapterManager } from '@/components/ChapterManager'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { ArrowLeft } from 'lucide-react'
@@ -12,12 +12,18 @@ interface Class {
   description: string
 }
 
-export default function NotePad() {
+interface ClassPageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function ClassPage({ params }: ClassPageProps) {
   const [classData, setClassData] = useState<Class | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const searchParams = useSearchParams()
   const router = useRouter()
-  const classId = searchParams.get('classId')
+  const classId = params.id
+
   // Load class data from local storage
   useEffect(() => {
     if (classId) {
@@ -82,9 +88,8 @@ export default function NotePad() {
 
         {/* Glassmorphic ChapterManager Wrapper */}
         <div className="relative bg-white/70 backdrop-blur-xl border border-white/30 shadow-xl rounded-3xl p-6 md:p-8 transition-all duration-300 hover:shadow-2xl">
-          {!isLoading && classId && <ChapterManager classId={classId} />
-}
-</div>
+          {!isLoading && classId && <ChapterManager classId={classId} />}
+        </div>
       </section>
     </main>
     </ProtectedRoute>

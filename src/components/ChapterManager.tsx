@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DrawingBoard } from './DrawingBoard'
 import { PlusCircle, Edit2, Trash2, Check, X } from 'lucide-react'
 
@@ -10,10 +10,12 @@ interface Chapter {
   subtitle: string
 }
 
-export function ChapterManager() {
-  const [chapters, setChapters] = useState<Chapter[]>([
-    { id: '1', title: 'Chapter 1', subtitle: 'Introduction' }
-  ])
+interface ChapterManagerProps {
+  classId: string
+}
+
+export function ChapterManager({ classId }: ChapterManagerProps) {
+  const [chapters, setChapters] = useState<Chapter[]>([])
   const [isAddingChapter, setIsAddingChapter] = useState(false)
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null)
   const [newChapterTitle, setNewChapterTitle] = useState('')
@@ -23,6 +25,26 @@ export function ChapterManager() {
   const generateId = () => {
     return Date.now().toString()
   }
+
+  // Load chapters from local storage on component mount
+  useEffect(() => {
+    const savedChapters = localStorage.getItem(`chapters-${classId}`)
+    if (savedChapters) {
+      setChapters(JSON.parse(savedChapters))
+    } else {
+      // Initialize with a default chapter if none exist
+      const defaultChapter = { id: '1', title: 'Chapter 1', subtitle: 'Introduction' }
+      setChapters([defaultChapter])
+      localStorage.setItem(`chapters-${classId}`, JSON.stringify([defaultChapter]))
+    }
+  }, [classId])
+
+  // Save chapters to local storage whenever they change
+  useEffect(() => {
+    if (chapters.length > 0) {
+      localStorage.setItem(`chapters-${classId}`, JSON.stringify(chapters))
+    }
+  }, [chapters, classId])
 
   // Add a new chapter
   const addChapter = () => {

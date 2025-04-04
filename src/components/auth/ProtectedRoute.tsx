@@ -21,6 +21,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           router.push('/')
           return
         }
+
+        // If user is authenticated and on the home page, redirect to classes
+        if (window.location.pathname === '/') {
+          console.log('Authenticated user on home page, redirecting to classes')
+          router.push('/classes')
+          return
+        }
         
         console.log('User authenticated, allowing access to protected route')
       } catch (error) {
