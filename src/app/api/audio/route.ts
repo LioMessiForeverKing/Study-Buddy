@@ -1,3 +1,4 @@
+"use server"
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'fs';
@@ -5,7 +6,7 @@ import mime from 'mime-types';
 import { NextRequest } from 'next/server';
 
 // Initialize Gemini API client and file manager
-const apiKey = 'AIzaSyDB5uL5w8v3ijAdg40ZTfW9K9iM6Bsgzrg';
+const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
   throw new Error('GEMINI_API_KEY environment variable is not set');
 }
