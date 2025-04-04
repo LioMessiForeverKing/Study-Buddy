@@ -1,9 +1,11 @@
 'use client'
 
 import { DrawingBoard } from '@/components/DrawingBoard'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
 
 export default function NotePad() {
   return (
+    <ProtectedRoute>
     <main className="relative min-h-screen bg-white text-gray-800 overflow-hidden">
       {/* Animated Google Gradient Background */}
       <div className="absolute inset-0 z-0 overflow-hidden">
@@ -37,5 +39,6 @@ export default function NotePad() {
         </div>
       </section>
     </main>
+    </ProtectedRoute>
   )
 }

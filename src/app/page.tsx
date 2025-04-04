@@ -7,6 +7,7 @@ import Image from 'next/image'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { theme } from '../../public/theme'
+import GoogleSignIn from '@/components/auth/GoogleSignIn'
 
 export default function HomePage() {
   const router = useRouter()
@@ -249,15 +250,8 @@ export default function HomePage() {
               </p>
 
               <div className="flex justify-center w-full max-w-md mx-auto relative z-50">
-                  <button
-                    onClick={() => router.push('/notepad')}
-                    className="group relative flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-lg font-medium text-white overflow-hidden backdrop-blur-lg transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgb(66,133,244,0.3)] before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#4CAF50] before:via-[#2196F3] before:to-[#FFC107] before:transition-all before:duration-500 hover:before:bg-gradient-to-r hover:before:from-[#FF9800] hover:before:via-[#FF5722] hover:before:to-[#F44336] before:animate-gradient-x"
-                  >
-                    <span className="relative flex items-center gap-2">
-                      Launch NotePad
-                      <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </span>
-                  </button>
+                  {/* Google Sign-In Button */}
+                  <GoogleSignIn />
                 </div>
 
               <div className="mt-10 text-sm text-center text-gray-500">
