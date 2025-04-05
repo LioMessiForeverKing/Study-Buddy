@@ -1,0 +1,51 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monkey Face -->
+  <circle cx="100" cy="90" r="60" fill="#B3E5FC" />
+  
+  <!-- Ears -->
+  <ellipse cx="40" cy="60" rx="20" ry="25" fill="#B3E5FC" />
+  <ellipse cx="160" cy="60" rx="20" ry="25" fill="#B3E5FC" />
+  
+  <!-- Hair/Top of Head -->
+  <path d="M60 40C70 20 130 20 140 40C150 60 150 60 140 70C130 80 70 80 60 70C50 60 50 60 60 40Z" fill="#212121" />
+  
+  <!-- Eyes -->
+  <circle cx="75" cy="90" r="15" fill="white" stroke="#212121" stroke-width="2" />
+  <circle cx="125" cy="90" r="15" fill="white" stroke="#212121" stroke-width="2" />
+  <circle cx="75" cy="90" r="8" fill="#4CAF50" />
+  <circle cx="125" cy="90" r="8" fill="#4CAF50" />
+  <circle cx="78" cy="87" r="3" fill="white" />
+  <circle cx="128" cy="87" r="3" fill="white" />
+  
+  <!-- Nose -->
+  <ellipse cx="100" cy="110" rx="10" ry="7" fill="#212121" />
+  
+  <!-- Mouth -->
+  <path d="M85 120C90 130 110 130 115 120" stroke="#212121" stroke-width="2" stroke-linecap="round" />
+  
+  <!-- Calculator -->
+  <rect x="80" y="140" width="40" height="50" rx="4" fill="#4CAF50" stroke="#388E3C" stroke-width="2" />
+  
+  <!-- Calculator Screen -->
+  <rect x="85" y="145" width="30" height="10" rx="2" fill="#E0F7FA" stroke="#388E3C" stroke-width="1" />
+  
+  <!-- Calculator Buttons -->
+  <rect x="85" y="160" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  <rect x="95" y="160" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  <rect x="105" y="160" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  
+  <rect x="85" y="170" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  <rect x="95" y="170" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  <rect x="105" y="170" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  
+  <rect x="85" y="180" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  <rect x="95" y="180" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  <rect x="105" y="180" width="7" height="7" rx="1" fill="white" stroke="#388E3C" stroke-width="1" />
+  
+  <!-- Tail -->
+  <path d="M140 120C160 130 170 150 160 170C150 190 140 180 145 170C150 160 140 150 130 140" fill="#B3E5FC" stroke="#212121" stroke-width="2" />
+  
+  <!-- Colorful Ears -->
+  <path d="M40 50C40 50 30 40 25 50C20 60 30 70 40 65" fill="#FFEB3B" stroke="#212121" stroke-width="2" />
+  <path d="M160 50C160 50 170 40 175 50C180 60 170 70 160 65" fill="#FFEB3B" stroke="#212121" stroke-width="2" />
+</svg>

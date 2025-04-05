@@ -1,0 +1,42 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monkey Face -->
+  <circle cx="100" cy="90" r="60" fill="#B3E5FC" />
+  
+  <!-- Ears -->
+  <ellipse cx="40" cy="60" rx="20" ry="25" fill="#B3E5FC" />
+  <ellipse cx="160" cy="60" rx="20" ry="25" fill="#B3E5FC" />
+  
+  <!-- Hair/Top of Head -->
+  <path d="M60 40C70 20 130 20 140 40C150 60 150 60 140 70C130 80 70 80 60 70C50 60 50 60 60 40Z" fill="#212121" />
+  
+  <!-- Eyes -->
+  <circle cx="75" cy="90" r="15" fill="white" stroke="#212121" stroke-width="2" />
+  <circle cx="125" cy="90" r="15" fill="white" stroke="#212121" stroke-width="2" />
+  <circle cx="75" cy="90" r="8" fill="#FF4081" />
+  <circle cx="125" cy="90" r="8" fill="#FF4081" />
+  <circle cx="78" cy="87" r="3" fill="white" />
+  <circle cx="128" cy="87" r="3" fill="white" />
+  
+  <!-- Nose -->
+  <ellipse cx="100" cy="110" rx="10" ry="7" fill="#212121" />
+  
+  <!-- Mouth -->
+  <path d="M85 120C90 130 110 130 115 120" stroke="#212121" stroke-width="2" stroke-linecap="round" />
+  
+  <!-- Globe -->
+  <circle cx="100" cy="160" r="30" fill="#2196F3" stroke="#0D47A1" stroke-width="2" />
+  
+  <!-- Continents -->
+  <path d="M85 145C90 140 95 150 100 145C105 140 110 145 115 140" fill="#4CAF50" stroke="#388E3C" stroke-width="1" />
+  <path d="M80 155C85 160 90 155 95 160C100 165 105 160 110 165C115 170 120 165 125 170" fill="#4CAF50" stroke="#388E3C" stroke-width="1" />
+  <path d="M90 175C95 170 100 175 105 170C110 165 115 170 120 165" fill="#4CAF50" stroke="#388E3C" stroke-width="1" />
+  
+  <!-- Latitude/Longitude Lines -->
+  <ellipse cx="100" cy="160" rx="30" ry="15" stroke="#0D47A1" stroke-width="1" fill="none" />
+  <path d="M70 160H130" stroke="#0D47A1" stroke-width="1" />
+  <path d="M100 130V190" stroke="#0D47A1" stroke-width="1" />
+  
+  <!-- Colorful Ears -->
+  <path d="M40 50C40 50 30 40 25 50C20 60 30 70 40 65" fill="#FF4081" stroke="#212121" stroke-width="2" />
+  <path d="M160 50C160 50 170 40 175 50C180 60 170 70 160 65" fill="#FF4081" stroke="#212121" stroke-width="2" />
+</svg>

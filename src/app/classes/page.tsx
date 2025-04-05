@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { PlusCircle, Edit2, Trash2, Check, X, BookOpen } from 'lucide-react'
+import { PlusCircle, Edit2, Trash2, Check, X, BookOpen, Home, Archive, Settings, BookText } from 'lucide-react'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { createClient } from '@/lib/supabase'
 import Image from 'next/image'
@@ -20,6 +20,7 @@ export default function ClassesPage() {
   const [newClassTitle, setNewClassTitle] = useState('')
   const [newClassDescription, setNewClassDescription] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('home')
   const router = useRouter()
   const supabase = createClient()
 
@@ -96,84 +97,175 @@ export default function ClassesPage() {
     router.push(`/classes/${classId}`)
   }
 
+  // Get subject icon based on class title
+  const getSubjectIcon = (title: string) => {
+    const lowerTitle = title.toLowerCase()
+    if (lowerTitle.includes('english')) return '/monkey-english.svg'
+    if (lowerTitle.includes('history')) return '/monkey-history.svg'
+    if (lowerTitle.includes('algebra') || lowerTitle.includes('math')) return '/monkey-algebra.svg'
+    if (lowerTitle.includes('science')) return '/monkey-science.svg'
+    if (lowerTitle.includes('art')) return '/monkey-art.svg'
+    
+    // Default icons based on first letter
+    const firstChar = lowerTitle.charAt(0)
+    if ('abc'.includes(firstChar)) return '/monkey-english.svg'
+    if ('def'.includes(firstChar)) return '/monkey-history.svg'
+    if ('ghij'.includes(firstChar)) return '/monkey-algebra.svg'
+    if ('klmn'.includes(firstChar)) return '/monkey-science.svg'
+    if ('opqr'.includes(firstChar)) return '/monkey-art.svg'
+    
+    return '/monkey-english.svg' // Default
+  }
+
+  // Get gradient background based on class title
+  const getGradientBackground = (title: string) => {
+    const lowerTitle = title.toLowerCase()
+    if (lowerTitle.includes('english')) return 'bg-gradient-to-br from-cyan-100 to-cyan-300'
+    if (lowerTitle.includes('history')) return 'bg-gradient-to-br from-pink-100 to-purple-300'
+    if (lowerTitle.includes('algebra') || lowerTitle.includes('math')) return 'bg-gradient-to-br from-yellow-100 to-yellow-300'
+    if (lowerTitle.includes('science')) return 'bg-gradient-to-br from-green-100 to-blue-300'
+    if (lowerTitle.includes('art')) return 'bg-gradient-to-br from-orange-100 to-red-300'
+    
+    // Default gradients based on first letter
+    const firstChar = lowerTitle.charAt(0)
+    if ('abc'.includes(firstChar)) return 'bg-gradient-to-br from-cyan-100 to-cyan-300'
+    if ('def'.includes(firstChar)) return 'bg-gradient-to-br from-pink-100 to-purple-300'
+    if ('ghij'.includes(firstChar)) return 'bg-gradient-to-br from-yellow-100 to-yellow-300'
+    if ('klmn'.includes(firstChar)) return 'bg-gradient-to-br from-green-100 to-blue-300'
+    if ('opqr'.includes(firstChar)) return 'bg-gradient-to-br from-orange-100 to-red-300'
+    
+    return 'bg-gradient-to-br from-blue-100 to-blue-300' // Default
+  }
+
   return (
     <ProtectedRoute>
-      <main className="relative min-h-screen bg-white text-gray-800 overflow-hidden">
-        {/* Logo */}
-        <div className="absolute top-4 left-4 z-50">
-          <Image src="/Yubi2.svg" alt="Yubi Logo" width={100} height={100} className="animate-float" />
-        </div>
-
-        {/* Animated Google Gradient Background */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute top-[-200px] left-[-150px] w-[600px] h-[600px] bg-[radial-gradient(closest-side,_#4285F4,_transparent)] animate-pulse-slow blur-3xl opacity-30" />
-          <div className="absolute bottom-[-150px] right-[-150px] w-[600px] h-[600px] bg-[radial-gradient(closest-side,_#34A853,_transparent)] animate-pulse-slow blur-3xl opacity-30" />
-          <div className="absolute top-[30%] right-[20%] w-[400px] h-[400px] bg-[radial-gradient(closest-side,_#FBBC05,_transparent)] animate-pulse-slow blur-2xl opacity-20" />
-          
-          {/* Educational Elements */}
-          <div className="absolute top-[20%] left-[10%] w-[100px] h-[100px] border-4 border-[#4285F4] rounded-full animate-float opacity-20" />
-          <div className="absolute bottom-[30%] right-[40%] w-[80px] h-[80px] border-4 border-[#34A853] rotate-45 animate-float opacity-20" />
-          <div className="absolute top-[40%] left-[30%] w-[60px] h-[60px] border-4 border-[#FBBC05] rounded-lg animate-float opacity-20" />
-        </div>
-
-        {/* Content */}
-        <section className="relative z-10 max-w-7xl mx-auto px-6 py-12">
-          <div className="mb-8">
-            <h1
-              className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2"
-              style={{
-                background:
-                  'linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Class Management
-            </h1>
-            <p className="text-gray-600 text-lg max-w-2xl">
-              Create and manage your classes. Each class has its own notepad for taking notes.
-            </p>
+      <main className="flex min-h-screen bg-gray-50">
+        {/* Sidebar */}
+        <div className="w-64 bg-white shadow-md z-10">
+          <div className="p-4 flex items-center gap-2">
+            <Image src="/Yubi2.svg" alt="StudyBuddy Logo" width={40} height={40} />
+            <h1 className="text-xl font-bold">StudyBuddy</h1>
           </div>
-
-          {/* Glassmorphic Class Manager Wrapper */}
-          <div className="relative bg-white/70 backdrop-blur-xl border border-white/30 shadow-xl rounded-3xl p-6 md:p-8 transition-all duration-300 hover:shadow-2xl">
-            <div className="flex justify-between items-center mb-8">
-              <h2 
-                className="text-3xl font-bold" 
-                style={{
-                  background: 'linear-gradient(to right, #4285F4, #34A853, #FBBC05, #EA4335)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                My Classes
-              </h2>
-              
-              {!isAddingClass ? (
-                <button
-                  onClick={() => setIsAddingClass(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#4285F4] to-[#34A853] text-white rounded-lg hover:from-[#FBBC05] hover:to-[#EA4335] transition-all"
+          
+          <nav className="mt-6">
+            <ul className="space-y-2">
+              <li>
+                <button 
+                  className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors"
+                  onClick={() => setActiveTab('home')}
                 >
-                  <PlusCircle size={18} />
-                  Add Class
+                  <Home className="mr-3" size={20} />
+                  <span>Home</span>
                 </button>
-              ) : (
-                <div className="flex items-end gap-2">
-                  <div className="space-y-1">
-                    <label htmlFor="classTitle" className="block text-sm font-medium text-gray-700">
-                      Class Title
+              </li>
+              
+              {/* Dynamic class navigation items */}
+              {classes.map((classItem) => (
+                <li key={classItem.id}>
+                  <button 
+                    className={`flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors ${activeTab === classItem.id ? 'bg-gray-100 text-blue-500' : ''}`}
+                    onClick={() => setActiveTab(classItem.id)}
+                  >
+                    <BookText className="mr-3" size={20} />
+                    <span>{classItem.title}</span>
+                  </button>
+                </li>
+              ))}
+              <li className="border-t border-gray-200 mt-4 pt-4">
+                <button 
+                  className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors"
+                  onClick={() => setActiveTab('new')}
+                >
+                  <PlusCircle className="mr-3" size={20} />
+                  <span>New Course</span>
+                </button>
+              </li>
+              <li>
+                <button 
+                  className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors"
+                  onClick={() => setActiveTab('archived')}
+                >
+                  <Archive className="mr-3" size={20} />
+                  <span>Archived Courses</span>
+                </button>
+              </li>
+              <li>
+                <button 
+                  className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors"
+                >
+                  <Settings className="mr-3" size={20} />
+                  <span>Settings</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 p-8">
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-800">Your Courses</h1>
+              <p className="text-gray-600 mt-2">Jump back in — brush up on your skills or learn something new!</p>
+              
+              {/* Tabs */}
+              <div className="flex mt-6 border-b border-gray-200 overflow-x-auto pb-1">
+                {/* Fixed tabs */}
+                <button 
+                  className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'home' ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setActiveTab('home')}
+                >
+                  Home
+                </button>
+                
+                {/* Dynamic class tabs */}
+                {classes.length > 0 && classes.map((classItem) => (
+                  <button 
+                    key={classItem.id}
+                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === classItem.id ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => setActiveTab(classItem.id)}
+                  >
+                    {classItem.title}
+                  </button>
+                ))}
+                
+                {/* Additional fixed tabs */}
+                <button 
+                  className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'new' ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setActiveTab('new')}
+                >
+                  New Course
+                </button>
+                <button 
+                  className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'archived' ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setActiveTab('archived')}
+                >
+                  Archived Courses
+                </button>
+              </div>
+            </div>
+
+            {/* New Class Form */}
+            {activeTab === 'new' && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 className="text-xl font-semibold mb-4">Create New Course</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="classTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                      Course Title
                     </label>
                     <input
                       type="text"
                       id="classTitle"
                       value={newClassTitle}
                       onChange={(e) => setNewClassTitle(e.target.value)}
-                      placeholder="Enter class title"
-                      className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter course title"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label htmlFor="classDescription" className="block text-sm font-medium text-gray-700">
+                  <div>
+                    <label htmlFor="classDescription" className="block text-sm font-medium text-gray-700 mb-1">
                       Description
                     </label>
                     <input
@@ -182,121 +274,168 @@ export default function ClassesPage() {
                       value={newClassDescription}
                       onChange={(e) => setNewClassDescription(e.target.value)}
                       placeholder="Enter description"
-                      className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
+                </div>
+                <div className="mt-4 flex justify-end">
                   <button
                     onClick={addClass}
                     disabled={!newClassTitle.trim()}
-                    className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Check size={18} />
-                  </button>
-                  <button
-                    onClick={() => setIsAddingClass(false)}
-                    className="p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
-                  >
-                    <X size={18} />
+                    Create Course
                   </button>
                 </div>
-              )}
-            </div>
-
-            {/* Class Cards Grid */}
-            {classes.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 mb-4">You haven't created any classes yet.</p>
-                <button
-                  onClick={() => setIsAddingClass(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#4285F4] to-[#34A853] text-white rounded-lg hover:from-[#FBBC05] hover:to-[#EA4335] transition-all"
-                >
-                  <PlusCircle size={18} />
-                  Create Your First Class
-                </button>
               </div>
-            ) : (
+            )}
+
+            {/* Course Grid */}
+            {(activeTab === 'home' || activeTab.match(/english|history|algebra|science|art/) || classes.some(c => c.id === activeTab)) && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {classes.map((classItem) => (
-                  <div key={classItem.id} className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg">
-                    {editingClassId === classItem.id ? (
-                      <div className="p-4 space-y-3">
-                        <div className="space-y-1">
-                          <label htmlFor={`editTitle-${classItem.id}`} className="block text-sm font-medium text-gray-700">
-                            Class Title
-                          </label>
-                          <input
-                            type="text"
-                            id={`editTitle-${classItem.id}`}
-                            value={newClassTitle}
-                            onChange={(e) => setNewClassTitle(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label htmlFor={`editDescription-${classItem.id}`} className="block text-sm font-medium text-gray-700">
-                            Description
-                          </label>
-                          <input
-                            type="text"
-                            id={`editDescription-${classItem.id}`}
-                            value={newClassDescription}
-                            onChange={(e) => setNewClassDescription(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2 pt-2">
-                          <button
-                            onClick={() => saveClassEdit(classItem.id)}
-                            disabled={!newClassTitle.trim()}
-                            className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Check size={18} />
-                          </button>
-                          <button
-                            onClick={cancelEditing}
-                            className="p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="p-4">
-                          <h3 className="text-xl font-bold mb-2">{classItem.title}</h3>
-                          <p className="text-gray-600 mb-4">{classItem.description}</p>
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => startEditingClass(classItem)}
-                                className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => deleteClass(classItem.id)}
-                                className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                {/* Filter classes based on active tab */}
+                {classes
+                  .filter(classItem => {
+                    if (activeTab === 'home') return true;
+                    if (activeTab === classItem.id) return true;
+                    return classItem.title.toLowerCase().includes(activeTab);
+                  })
+                  .map((classItem) => (
+                    <div 
+                      key={classItem.id} 
+                      className={`rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg ${getGradientBackground(classItem.title)}`}
+                    >
+                      {editingClassId === classItem.id ? (
+                        <div className="p-4 bg-white space-y-3">
+                          <div className="space-y-1">
+                            <label htmlFor={`editTitle-${classItem.id}`} className="block text-sm font-medium text-gray-700">
+                              Course Title
+                            </label>
+                            <input
+                              type="text"
+                              id={`editTitle-${classItem.id}`}
+                              value={newClassTitle}
+                              onChange={(e) => setNewClassTitle(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label htmlFor={`editDescription-${classItem.id}`} className="block text-sm font-medium text-gray-700">
+                              Description
+                            </label>
+                            <input
+                              type="text"
+                              id={`editDescription-${classItem.id}`}
+                              value={newClassDescription}
+                              onChange={(e) => setNewClassDescription(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2 pt-2">
                             <button
-                              onClick={() => goToNotepad(classItem.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#4285F4] to-[#34A853] text-white rounded-lg hover:from-[#FBBC05] hover:to-[#EA4335] transition-all"
+                              onClick={() => saveClassEdit(classItem.id)}
+                              disabled={!newClassTitle.trim()}
+                              className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <BookOpen size={16} />
-                              Open Notepad
+                              <Check size={18} />
+                            </button>
+                            <button
+                              onClick={cancelEditing}
+                              className="p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                            >
+                              <X size={18} />
                             </button>
                           </div>
                         </div>
-                      </>
-                    )}
+                      ) : (
+                        <>
+                          <div className="p-6 flex justify-center">
+                            <Image 
+                              src={getSubjectIcon(classItem.title)} 
+                              alt={classItem.title} 
+                              width={120} 
+                              height={120} 
+                              className="object-contain"
+                            />
+                          </div>
+                          <div className="p-4 bg-white">
+                            <h3 className="text-xl font-bold mb-1">{classItem.title}</h3>
+                            <p className="text-gray-600 mb-4 text-sm">{classItem.description}</p>
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => startEditingClass(classItem)}
+                                  className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
+                                <button
+                                  onClick={() => deleteClass(classItem.id)}
+                                  className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => goToNotepad(classItem.id)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
+                              >
+                                <BookOpen size={16} />
+                                Open
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+
+                {/* New Course Card */}
+                {activeTab === 'home' && (
+                  <div 
+                    className="rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer"
+                    onClick={() => setActiveTab('new')}
+                  >
+                    <div className="p-6 flex justify-center">
+                      <Image 
+                        src="/new-course.svg" 
+                        alt="New Course" 
+                        width={120} 
+                        height={120} 
+                        className="object-contain"
+                      />
+                    </div>
+                    <div className="p-4 bg-white text-center">
+                      <h3 className="text-xl font-bold mb-1">New Course</h3>
+                      <p className="text-gray-600 mb-4 text-sm">Create a new course to get started</p>
+                    </div>
                   </div>
-                ))}
+                )}
+
+                {/* Empty State */}
+                {classes.length === 0 && activeTab === 'home' && (
+                  <div className="col-span-3 text-center py-12">
+                    <p className="text-gray-500 mb-4">You haven't created any courses yet.</p>
+                    <button
+                      onClick={() => setActiveTab('new')}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
+                    >
+                      <PlusCircle size={18} />
+                      Create Your First Course
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Archived Courses */}
+            {activeTab === 'archived' && (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No archived courses found.</p>
               </div>
             )}
           </div>
-        </section>
+        </div>
       </main>
     </ProtectedRoute>
   )
