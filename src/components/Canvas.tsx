@@ -3,10 +3,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { AudioRecorder } from './AudioRecorder'
 import { marked } from 'marked';
+import { X } from 'lucide-react';
 
 interface Point {
   x: number
   y: number
+}
+
+interface TextElement {
+  id: string
+  x: number
+  y: number
+  text: string
+  color: string
+  fontSize: number
+  isDragging: boolean
 }
 
 interface CanvasProps {
@@ -21,7 +32,7 @@ interface ConversationMessage {
   content: string;
 }
 
-export function Canvas({ width = 800, height = 600, className = '' }: CanvasProps) {
+export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [color, setColor] = useState('#000000')
@@ -34,6 +45,12 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([])
   const [isSpeaking, setIsSpeaking] = useState(false)
+  
+  // Text tool state
+  const [isTextTool, setIsTextTool] = useState(false)
+  const [textElements, setTextElements] = useState<TextElement[]>([])
+  const [activeTextId, setActiveTextId] = useState<string | null>(null)
+  const [fontSize, setFontSize] = useState(16)
 
   // Function to speak text using Eleven Labs API
   const speakText = async (text: string) => {
@@ -79,7 +96,8 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
           mimeType,
           prompt: question,
           canvasData,
-          history: updatedHistory
+          history: updatedHistory,
+          textElements: textElements
         })
       })
 
@@ -121,8 +139,35 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
     const x = (e.clientX - rect.left) * scaleX
     const y = (e.clientY - rect.top) * scaleY
 
-    setIsDrawing(true)
-    setPrevPoint({ x, y })
+    if (isTextTool) {
+      // Add a new text element when in text tool mode
+      const newTextElement: TextElement = {
+        id: `text-${Date.now()}`,
+        x,
+        y,
+        text: 'Click to edit',
+        color,
+        fontSize,
+        isDragging: false
+      }
+      setTextElements([...textElements, newTextElement])
+      setActiveTextId(newTextElement.id)
+      
+      // Immediately set this element to active for editing
+      setTimeout(() => {
+        const activeElement = document.querySelector(`[data-text-id="${newTextElement.id}"]`) as HTMLElement
+        if (activeElement) {
+          const textArea = activeElement.querySelector('textarea')
+          if (textArea) {
+            textArea.focus()
+            textArea.select()
+          }
+        }
+      }, 50)
+    } else {
+      setIsDrawing(true)
+      setPrevPoint({ x, y })
+    }
   }
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -155,9 +200,66 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
     setPrevPoint(currentPoint)
   }
 
+  // Handle text element dragging
+  const handleTextMouseDown = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    setActiveTextId(id)
+    
+    // Mark this text element as being dragged
+    setTextElements(textElements.map(el => 
+      el.id === id ? { ...el, isDragging: true } : el
+    ))
+  }
+  
+  const handleTextMouseMove = (e: React.MouseEvent) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    // Only proceed if we have a text element being dragged
+    if (!textElements.some(el => el.isDragging)) return
+    
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    
+    setTextElements(textElements.map(el => {
+      if (el.isDragging) {
+        return {
+          ...el,
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY
+        }
+      }
+      return el
+    }))
+  }
+  
+  const handleTextMouseUp = () => {
+    // Clear dragging state for all text elements
+    setTextElements(textElements.map(el => 
+      el.isDragging ? { ...el, isDragging: false } : el
+    ))
+  }
+  
+  // Handle text editing
+  const handleTextChange = (id: string, newText: string) => {
+    setTextElements(textElements.map(el => 
+      el.id === id ? { ...el, text: newText } : el
+    ))
+  }
+  
+  // Delete a text element
+  const deleteTextElement = (id: string) => {
+    setTextElements(textElements.filter(el => el.id !== id))
+    if (activeTextId === id) {
+      setActiveTextId(null)
+    }
+  }
+  
   const stopDrawing = () => {
     setIsDrawing(false)
     setPrevPoint(null)
+    handleTextMouseUp()
   }
 
   const clearCanvas = () => {
@@ -169,6 +271,10 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
 
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
+    
+    // Clear all text elements
+    setTextElements([])
+    setActiveTextId(null)
   }
 
   const askGemini = async () => {
@@ -190,7 +296,8 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
         body: JSON.stringify({ 
           imageData, 
           question,
-          history: updatedHistory
+          history: updatedHistory,
+          textElements: textElements
         }),
       })
   
@@ -229,7 +336,7 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
           <input
             type="color"
             id="color"
-          value={color}
+            value={color}
             disabled={isEraser}
             onChange={(e) => setColor(e.target.value)}
             className="w-8 h-8 border rounded cursor-pointer"
@@ -250,15 +357,49 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
           <span className="text-sm">{brushSize}px</span>
         </div>
 
+        {isTextTool && (
+          <div className="flex items-center gap-2">
+            <label htmlFor="fontSize" className="text-sm font-medium">Font Size:</label>
+            <input
+              type="range"
+              id="fontSize"
+              min="10"
+              max="36"
+              value={fontSize}
+              onChange={(e) => setFontSize(parseInt(e.target.value))}
+              className="w-32"
+            />
+            <span className="text-sm">{fontSize}px</span>
+          </div>
+        )}
+
         <button
-          onClick={() => setIsEraser(!isEraser)}
+          onClick={() => {
+            setIsTextTool(false)
+            setIsEraser(!isEraser)
+          }}
+          disabled={isTextTool}
           className={`px-3 py-1 text-sm rounded-md transition ${
             isEraser
               ? 'bg-yellow-500 text-white hover:bg-yellow-600'
               : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-          }`}
+          } ${isTextTool ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {isEraser ? 'Eraser ON' : 'Eraser OFF'}
+        </button>
+        
+        <button
+          onClick={() => {
+            setIsTextTool(!isTextTool)
+            if (isEraser) setIsEraser(false)
+          }}
+          className={`px-3 py-1 text-sm rounded-md transition ${
+            isTextTool
+              ? 'bg-blue-500 text-white hover:bg-blue-600'
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          }`}
+        >
+          {isTextTool ? 'Text Tool ON' : 'Text Tool'}
         </button>
 
         <button
@@ -287,17 +428,85 @@ export function Canvas({ width = 800, height = 600, className = '' }: CanvasProp
       </div>
 
       {/* Canvas Element */}
-      <canvas
-        ref={canvasRef}
-        width={width}
-        height={height}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        className={`rounded-xl border border-gray-300 ${className}`}
-        style={{ backgroundColor: '#ffffff' }}
-      />
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={width}
+          height={height}
+          onMouseDown={startDrawing}
+          onMouseMove={(e) => {
+            draw(e)
+            handleTextMouseMove(e)
+          }}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          className={`rounded-xl border border-gray-300 ${className}`}
+          style={{ backgroundColor: '#ffffff' }}
+        />
+        
+        {/* Text Elements Overlay */}
+        <div 
+          className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          style={{ width: `${width}px`, height: `${height}px` }}
+        >
+          {textElements.map((element) => (
+            <div 
+              key={element.id}
+              data-text-id={element.id}
+              className={`absolute ${element.id === activeTextId ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:ring-2 hover:ring-blue-300'}`}
+              style={{
+                left: `${element.x}px`,
+                top: `${element.y}px`,
+                color: element.color,
+                fontSize: `${element.fontSize}px`,
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'auto',
+                cursor: element.isDragging ? 'grabbing' : 'grab',
+                maxWidth: '250px',
+                wordBreak: 'break-word',
+                padding: '4px',
+                borderRadius: '4px',
+                backgroundColor: element.id === activeTextId ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.5)',
+                transition: 'background-color 0.2s, box-shadow 0.2s',
+                zIndex: element.id === activeTextId ? 10 : 1
+              }}
+              onMouseDown={(e) => handleTextMouseDown(e, element.id)}
+            >
+              {element.id === activeTextId ? (
+                <div className="flex flex-col">
+                  <div className="flex justify-end mb-1">
+                    <button 
+                      className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-sm"
+                      onClick={() => deleteTextElement(element.id)}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                  <textarea
+                    value={element.text}
+                    onChange={(e) => handleTextChange(element.id, e.target.value)}
+                    className="p-2 border border-gray-300 rounded bg-white/90 backdrop-blur-sm shadow-sm w-full"
+                    style={{ color: element.color, fontSize: `${element.fontSize}px` }}
+                    onClick={(e) => e.stopPropagation()}
+                    autoFocus
+                    rows={3}
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="p-2 cursor-pointer rounded hover:bg-white/70 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setActiveTextId(element.id)
+                  }}
+                >
+                  {element.text}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Conversation History */}
       {conversationHistory.length > 0 && (

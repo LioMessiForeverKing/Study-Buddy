@@ -2,7 +2,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'fs';
-import mime from 'mime-types';
 import { NextRequest } from 'next/server';
 
 // Initialize Gemini API client and file manager
@@ -21,36 +20,6 @@ const generationConfig = {
   maxOutputTokens: 65536,
   responseMimeType: 'text/plain',
 };
-
-/**
- * Uploads a file to Gemini
- * @param audioData - Base64 encoded audio data
- * @param mimeType - MIME type of the audio file
- */
-async function uploadToGemini(audioData: string, mimeType: string) {
-  console.log('Starting file upload to Gemini...');
-  
-  try {
-    // Create a temporary file
-    const tempFilePath = `/tmp/audio-${Date.now()}.${mime.extension(mimeType)}`;
-    fs.writeFileSync(tempFilePath, Buffer.from(audioData, 'base64'));
-    
-    // Upload to Gemini
-    const uploadResult = await fileManager.uploadFile(tempFilePath, {
-      mimeType,
-      displayName: `audio-${Date.now()}`,
-    });
-    
-    // Clean up temp file
-    fs.unlinkSync(tempFilePath);
-    
-    console.log(`Successfully uploaded file as: ${uploadResult.file.name}`);
-    return uploadResult.file;
-  } catch (error) {
-    console.error('Error uploading file to Gemini:', error);
-    throw error;
-  }
-}
 
 /**
  * Uploads canvas data to Gemini and returns the file URI
@@ -82,36 +51,23 @@ async function uploadCanvasData(base64CanvasData: string): Promise<string> {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('Received audio processing request');
+  console.log('Received Gemini analysis request');
   
   try {
-    // Get audio data and conversation history from request
-    const { audioData, mimeType, prompt, canvasData, history = [], textElements = [] } = await request.json();
+    // Get image data, question, and conversation history from request
+    const { imageData, question, history = [], textElements = [] } = await request.json();
     
-    if (!audioData || !mimeType || !prompt) {
-      console.error('Missing required audio data or mime type');
-      return new Response(JSON.stringify({ error: 'Missing required audio data' }), {
+    if (!imageData || !question) {
+      console.error('Missing required image data or question');
+      return new Response(JSON.stringify({ error: 'Missing required data' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
     
-    // Upload audio to Gemini
-    const file = await uploadToGemini(audioData, mimeType);
-
-    // Process canvas data if provided
-    let canvasInlineData = null;
-    if (canvasData) {
-      const base64CanvasData = canvasData.split(',')[1];
-      // Assuming you have a way to upload the canvas data and get a URI
-      const canvasFileUri = await uploadCanvasData(base64CanvasData); // Implement this function
-      canvasInlineData = {
-        fileData: {
-          mimeType: "image/png",
-          fileUri: canvasFileUri
-        }
-      };
-    }
+    // Process canvas data
+    const base64CanvasData = imageData.split(',')[1];
+    const canvasFileUri = await uploadCanvasData(base64CanvasData);
     
     // Initialize model
     const model = genAI.getGenerativeModel({
@@ -131,43 +87,37 @@ export async function POST(request: NextRequest) {
       history: formattedHistory,
     });
     
-    // Send message with audio file
     // Prepare text elements information if available
     let textElementsInfo = '';
     if (textElements && textElements.length > 0) {
       textElementsInfo = '\n\nText elements on the canvas:\n';
-      textElements.forEach((element, index) => {
+      textElements.forEach((element: any, index: number) => {
         textElementsInfo += `${index + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
       });
     }
     
-    const messageParts = [
-      { text: prompt + textElementsInfo },
+    // Send message with canvas image and text elements info
+    const result = await chatSession.sendMessage([
+      { text: question + textElementsInfo },
       {
         fileData: {
-          mimeType: file.mimeType,
-          fileUri: file.uri,
+          mimeType: 'image/png',
+          fileUri: canvasFileUri,
         },
       },
-    ];
-
-    if (canvasInlineData) {
-      messageParts.push(canvasInlineData);
-    }
-
-    const result = await chatSession.sendMessage(messageParts);
+    ]);
     
     // Process response
     const responseText = result.response.text();
-    console.log('Successfully processed audio with Gemini');
+    console.log('Successfully processed image with Gemini');
     
     return new Response(JSON.stringify({ analysis: responseText }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error processing audio:', error);
-    return new Response(JSON.stringify({ error: 'Failed to process audio' }), {
+    console.error('Error processing image:', error);
+    return new Response(JSON.stringify({ error: 'Failed to process image' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
