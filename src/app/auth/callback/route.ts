@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
 
   if (code) {
-    const cookieStore = cookies() // ✅ DO NOT AWAIT THIS
+    // Await the cookies() function as required by Next.js
+    const cookieStore = await cookies()
     const response = NextResponse.redirect(new URL('/notepad', request.url))
 
     const supabase = createServerClient(
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           get(name: string) {
+            // Use the awaited cookieStore
             return cookieStore.get(name)?.value
           },
           set(name: string, value: string, options: any) {
