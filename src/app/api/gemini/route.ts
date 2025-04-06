@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
   
   try {
     // Get image data, question, and conversation history from request
-    const { imageData, question, history = [], textElements = [] } = await request.json();
+    const { imageData, allPagesData = [], currentPageIndex = 0, question, history = [], textElements = [] } = await request.json();
     
-    if (!imageData || !question) {
+    if ((!imageData && !allPagesData.length) || !question) {
       console.error('Missing required image data or question');
       return new Response(JSON.stringify({ error: 'Missing required data' }), {
         status: 400,
@@ -65,9 +65,24 @@ export async function POST(request: NextRequest) {
       });
     }
     
-    // Process canvas data
-    const base64CanvasData = imageData.split(',')[1];
-    const canvasFileUri = await uploadCanvasData(base64CanvasData);
+    // Process current canvas data (for backward compatibility)
+    const base64CanvasData = imageData ? imageData.split(',')[1] : null;
+    const canvasFileUri = base64CanvasData ? await uploadCanvasData(base64CanvasData) : null;
+    
+    // Process all pages data if available
+    const pageFileUris = [];
+    if (allPagesData && allPagesData.length > 0) {
+      for (const page of allPagesData) {
+        if (page.imageData) {
+          const base64Data = page.imageData.split(',')[1];
+          const fileUri = await uploadCanvasData(base64Data);
+          pageFileUris.push({
+            pageNumber: page.pageNumber,
+            fileUri: fileUri
+          });
+        }
+      }
+    }
     
     // Initialize model
     const model = genAI.getGenerativeModel({
@@ -89,23 +104,71 @@ export async function POST(request: NextRequest) {
     
     // Prepare text elements information if available
     let textElementsInfo = '';
-    if (textElements && textElements.length > 0) {
+    
+    // If we have multi-page data, include information from all pages
+    if (allPagesData && allPagesData.length > 0) {
+      textElementsInfo = '\n\nCanvas contains multiple pages with the following elements:\n';
+      
+      allPagesData.forEach((page, pageIdx) => {
+        if (page.textElements && page.textElements.length > 0) {
+          textElementsInfo += `\nPage ${page.pageNumber}${pageIdx === currentPageIndex ? ' (Current Page)' : ''}:\n`;
+          page.textElements.forEach((element: any, elemIdx: number) => {
+            textElementsInfo += `  ${elemIdx + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
+          });
+        } else {
+          textElementsInfo += `\nPage ${page.pageNumber}${pageIdx === currentPageIndex ? ' (Current Page)' : ''}: No text elements\n`;
+        }
+      });
+    }
+    // For backward compatibility, use the single page text elements if no multi-page data
+    else if (textElements && textElements.length > 0) {
       textElementsInfo = '\n\nText elements on the canvas:\n';
       textElements.forEach((element: any, index: number) => {
         textElementsInfo += `${index + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
       });
     }
     
-    // Send message with canvas image and text elements info
-    const result = await chatSession.sendMessage([
-      { text: question + textElementsInfo },
-      {
+    // Send message with canvas images and text elements info
+    const messageParts = [
+      { text: question + textElementsInfo }
+    ];
+    
+    // Add all page images if available
+    if (pageFileUris.length > 0) {
+      // First add the current page image
+      const currentPageUri = pageFileUris.find(p => p.pageNumber === currentPageIndex + 1)?.fileUri || canvasFileUri;
+      if (currentPageUri) {
+        messageParts.push({
+          fileData: {
+            mimeType: 'image/png',
+            fileUri: currentPageUri,
+          },
+        });
+      }
+      
+      // Then add other page images
+      for (const page of pageFileUris) {
+        if (page.pageNumber !== currentPageIndex + 1 && page.fileUri) {
+          messageParts.push({
+            fileData: {
+              mimeType: 'image/png',
+              fileUri: page.fileUri,
+            },
+          });
+        }
+      }
+    } 
+    // Fallback to single image for backward compatibility
+    else if (canvasFileUri) {
+      messageParts.push({
         fileData: {
           mimeType: 'image/png',
           fileUri: canvasFileUri,
         },
-      },
-    ]);
+      });
+    }
+    
+    const result = await chatSession.sendMessage(messageParts);
     
     // Process response
     const responseText = result.response.text();

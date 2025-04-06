@@ -96,7 +96,14 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
       saveCurrentPage()
       
       const canvas = canvasRef.current
-      const canvasData = canvas ? canvas.toDataURL('image/png') : null
+      const currentCanvasData = canvas ? canvas.toDataURL('image/png') : null
+      
+      // Prepare all pages data to send to Gemini
+      const allPagesData = pages.map((page, index) => ({
+        pageNumber: index + 1,
+        imageData: index === currentPageIndex ? currentCanvasData : page.imageData,
+        textElements: index === currentPageIndex ? textElements : page.textElements
+      }))
       
       const updatedHistory = [...conversationHistory, { role: 'user', content: question }]
       setConversationHistory(updatedHistory)
@@ -108,9 +115,11 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
           audioData,
           mimeType,
           prompt: question,
-          canvasData,
+          canvasData: currentCanvasData, // Keep for backward compatibility
+          allPagesData, // Send all pages data
+          currentPageIndex,
           history: updatedHistory,
-          textElements: textElements
+          textElements: textElements // Keep for backward compatibility
         })
       })
 
@@ -374,8 +383,16 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
       
       // Save the current page before analyzing
       saveCurrentPage()
-  
-      const imageData = canvas.toDataURL('image/png')
+      
+      // Get current page data
+      const currentPageImageData = canvas.toDataURL('image/png')
+      
+      // Prepare all pages data to send to Gemini
+      const allPagesData = pages.map((page, index) => ({
+        pageNumber: index + 1,
+        imageData: index === currentPageIndex ? currentPageImageData : page.imageData,
+        textElements: index === currentPageIndex ? textElements : page.textElements
+      }))
       
       const updatedHistory = [...conversationHistory, { role: 'user', content: question }]
       setConversationHistory(updatedHistory)
@@ -384,10 +401,12 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          imageData, 
+          imageData: currentPageImageData, // Keep for backward compatibility
+          allPagesData, // Send all pages data
+          currentPageIndex,
           question,
           history: updatedHistory,
-          textElements: textElements
+          textElements: textElements // Keep for backward compatibility
         }),
       })
   

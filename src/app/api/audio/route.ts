@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Get audio data and conversation history from request
-    const { audioData, mimeType, prompt, canvasData, history = [], textElements = [] } = await request.json();
+    const { audioData, mimeType, prompt, canvasData, allPagesData = [], currentPageIndex = 0, history = [], textElements = [] } = await request.json();
     
     if (!audioData || !mimeType || !prompt) {
       console.error('Missing required audio data or mime type');
@@ -99,18 +99,32 @@ export async function POST(request: NextRequest) {
     // Upload audio to Gemini
     const file = await uploadToGemini(audioData, mimeType);
 
-    // Process canvas data if provided
+    // Process canvas data if provided (for backward compatibility)
     let canvasInlineData = null;
     if (canvasData) {
       const base64CanvasData = canvasData.split(',')[1];
-      // Assuming you have a way to upload the canvas data and get a URI
-      const canvasFileUri = await uploadCanvasData(base64CanvasData); // Implement this function
+      const canvasFileUri = await uploadCanvasData(base64CanvasData);
       canvasInlineData = {
         fileData: {
           mimeType: "image/png",
           fileUri: canvasFileUri
         }
       };
+    }
+    
+    // Process all pages data if available
+    const pageFileUris = [];
+    if (allPagesData && allPagesData.length > 0) {
+      for (const page of allPagesData) {
+        if (page.imageData) {
+          const base64Data = page.imageData.split(',')[1];
+          const fileUri = await uploadCanvasData(base64Data);
+          pageFileUris.push({
+            pageNumber: page.pageNumber,
+            fileUri: fileUri
+          });
+        }
+      }
     }
     
     // Initialize model
@@ -134,7 +148,24 @@ export async function POST(request: NextRequest) {
     // Send message with audio file
     // Prepare text elements information if available
     let textElementsInfo = '';
-    if (textElements && textElements.length > 0) {
+    
+    // If we have multi-page data, include information from all pages
+    if (allPagesData && allPagesData.length > 0) {
+      textElementsInfo = '\n\nCanvas contains multiple pages with the following elements:\n';
+      
+      allPagesData.forEach((page, pageIdx) => {
+        if (page.textElements && page.textElements.length > 0) {
+          textElementsInfo += `\nPage ${page.pageNumber}${pageIdx === currentPageIndex ? ' (Current Page)' : ''}:\n`;
+          page.textElements.forEach((element: any, elemIdx: number) => {
+            textElementsInfo += `  ${elemIdx + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
+          });
+        } else {
+          textElementsInfo += `\nPage ${page.pageNumber}${pageIdx === currentPageIndex ? ' (Current Page)' : ''}: No text elements\n`;
+        }
+      });
+    }
+    // For backward compatibility, use the single page text elements if no multi-page data
+    else if (textElements && textElements.length > 0) {
       textElementsInfo = '\n\nText elements on the canvas:\n';
       textElements.forEach((element, index) => {
         textElementsInfo += `${index + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
@@ -151,7 +182,33 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    if (canvasInlineData) {
+    // Add all page images if available
+    if (pageFileUris.length > 0) {
+      // First add the current page image
+      const currentPageUri = pageFileUris.find(p => p.pageNumber === currentPageIndex + 1)?.fileUri;
+      if (currentPageUri) {
+        messageParts.push({
+          fileData: {
+            mimeType: 'image/png',
+            fileUri: currentPageUri,
+          },
+        });
+      }
+      
+      // Then add other page images
+      for (const page of pageFileUris) {
+        if (page.pageNumber !== currentPageIndex + 1 && page.fileUri) {
+          messageParts.push({
+            fileData: {
+              mimeType: 'image/png',
+              fileUri: page.fileUri,
+            },
+          });
+        }
+      }
+    }
+    // Fallback to single canvas image for backward compatibility
+    else if (canvasInlineData) {
       messageParts.push(canvasInlineData);
     }
 
