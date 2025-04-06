@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AudioRecorder } from './AudioRecorder'
 import { marked } from 'marked';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 interface Point {
   x: number
@@ -18,6 +18,12 @@ interface TextElement {
   color: string
   fontSize: number
   isDragging: boolean
+}
+
+interface CanvasPage {
+  id: string
+  textElements: TextElement[]
+  imageData?: string
 }
 
 interface CanvasProps {
@@ -51,6 +57,10 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
   const [textElements, setTextElements] = useState<TextElement[]>([])
   const [activeTextId, setActiveTextId] = useState<string | null>(null)
   const [fontSize, setFontSize] = useState(16)
+  
+  // Multi-page state
+  const [pages, setPages] = useState<CanvasPage[]>([{ id: '1', textElements: [] }])
+  const [currentPageIndex, setCurrentPageIndex] = useState(0)
 
   // Function to speak text using Eleven Labs API
   const speakText = async (text: string) => {
@@ -81,6 +91,9 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
     try {
       setIsProcessingAudio(true)
       setAnalysis(null)
+      
+      // Save the current page before processing audio
+      saveCurrentPage()
       
       const canvas = canvasRef.current
       const canvasData = canvas ? canvas.toDataURL('image/png') : null
@@ -118,6 +131,7 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
     }
   }
 
+  // Initialize canvas when component mounts or when page changes
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -125,9 +139,23 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Clear canvas with white background
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
-  }, [])
+    
+    // If the current page has saved image data, restore it
+    const currentPage = pages[currentPageIndex]
+    if (currentPage.imageData) {
+      const img = new Image()
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0)
+      }
+      img.src = currentPage.imageData
+    }
+    
+    // Update text elements from the current page
+    setTextElements(currentPage.textElements)
+  }, [currentPageIndex, pages])
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -275,6 +303,65 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
     // Clear all text elements
     setTextElements([])
     setActiveTextId(null)
+    
+    // Update the current page in the pages array
+    const updatedPages = [...pages]
+    updatedPages[currentPageIndex] = {
+      ...updatedPages[currentPageIndex],
+      textElements: [],
+      imageData: canvas.toDataURL('image/png')
+    }
+    setPages(updatedPages)
+  }
+  
+  // Save the current canvas state before switching pages
+  const saveCurrentPage = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    // Create a copy of the pages array
+    const updatedPages = [...pages]
+    
+    // Update the current page with the latest text elements and canvas image
+    updatedPages[currentPageIndex] = {
+      ...updatedPages[currentPageIndex],
+      textElements: textElements,
+      imageData: canvas.toDataURL('image/png')
+    }
+    
+    setPages(updatedPages)
+  }
+  
+  // Add a new page
+  const addNewPage = () => {
+    // First save the current page
+    saveCurrentPage()
+    
+    // Create a new page
+    const newPage: CanvasPage = {
+      id: Date.now().toString(),
+      textElements: []
+    }
+    
+    // Add the new page and switch to it
+    setPages([...pages, newPage])
+    setCurrentPageIndex(pages.length)
+  }
+  
+  // Navigate to the previous page
+  const goToPreviousPage = () => {
+    if (currentPageIndex > 0) {
+      saveCurrentPage()
+      setCurrentPageIndex(currentPageIndex - 1)
+    }
+  }
+  
+  // Navigate to the next page
+  const goToNextPage = () => {
+    if (currentPageIndex < pages.length - 1) {
+      saveCurrentPage()
+      setCurrentPageIndex(currentPageIndex + 1)
+    }
   }
 
   const askGemini = async () => {
@@ -284,6 +371,9 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
     try {
       setIsAnalyzing(true)
       setAnalysis(null)
+      
+      // Save the current page before analyzing
+      saveCurrentPage()
   
       const imageData = canvas.toDataURL('image/png')
       
@@ -331,6 +421,38 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
       {/* Control Panel */}
       <div className="flex flex-col gap-4 mb-2">
         <div className="flex flex-wrap items-center gap-4">
+        {/* Page Navigation */}
+        <div className="flex items-center gap-2 mr-4">
+          <button
+            onClick={goToPreviousPage}
+            disabled={currentPageIndex === 0}
+            className="p-1 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Previous Page"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          
+          <span className="text-sm font-medium">
+            Page {currentPageIndex + 1} of {pages.length}
+          </span>
+          
+          <button
+            onClick={goToNextPage}
+            disabled={currentPageIndex === pages.length - 1}
+            className="p-1 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Next Page"
+          >
+            <ChevronRight size={18} />
+          </button>
+          
+          <button
+            onClick={addNewPage}
+            className="p-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+            title="Add New Page"
+          >
+            <Plus size={18} />
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <label htmlFor="color" className="text-sm font-medium">Color:</label>
           <input
