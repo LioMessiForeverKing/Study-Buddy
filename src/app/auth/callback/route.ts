@@ -20,10 +20,10 @@ export async function GET(request: NextRequest) {
             // Use the awaited cookieStore
             return cookieStore.get(name)?.value
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options: CookieOptions) {
             response.cookies.set(name, value, options)
           },
-          remove(name: string, options: any) {
+          remove(name: string, options: CookieOptions) {
             response.cookies.set(name, '', { ...options, maxAge: -1 })
           },
         },
@@ -36,4 +36,16 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(new URL('/', request.url))
+}
+
+interface CookieOptions {
+  name?: string
+  value?: string
+  path?: string
+  domain?: string
+  maxAge?: number
+  httpOnly?: boolean
+  secure?: boolean
+  sameSite?: 'strict' | 'lax' | 'none'
+  priority?: 'low' | 'medium' | 'high'
 }

@@ -132,8 +132,29 @@ export async function POST(request: NextRequest) {
       model: 'gemini-2.0-flash-thinking-exp-01-21',
     });
     
+    // Define interfaces for type safety
+    interface TextElement {
+      id?: string;
+      x: number;
+      y: number;
+      text: string;
+      color?: string;
+      fontSize?: number;
+    }
+    
+    interface CanvasPage {
+      pageNumber: number;
+      textElements?: TextElement[];
+      imageData?: string;
+    }
+    
+    interface ConversationMessage {
+      role: string;
+      content: string;
+    }
+    
     // Format conversation history for Gemini API
-    const formattedHistory = history.map((msg: { role: string; content: string }) => ({
+    const formattedHistory = history.map((msg: ConversationMessage) => ({
       role: msg.role === 'assistant' ? 'model' : msg.role,
       parts: [{ text: msg.content }]
     }));
@@ -153,10 +174,10 @@ export async function POST(request: NextRequest) {
     if (allPagesData && allPagesData.length > 0) {
       textElementsInfo = '\n\nCanvas contains multiple pages with the following elements:\n';
       
-      allPagesData.forEach((page, pageIdx) => {
+      allPagesData.forEach((page: CanvasPage, pageIdx: number) => {
         if (page.textElements && page.textElements.length > 0) {
           textElementsInfo += `\nPage ${page.pageNumber}${pageIdx === currentPageIndex ? ' (Current Page)' : ''}:\n`;
-          page.textElements.forEach((element: any, elemIdx: number) => {
+          page.textElements.forEach((element: TextElement, elemIdx: number) => {
             textElementsInfo += `  ${elemIdx + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
           });
         } else {
@@ -167,7 +188,7 @@ export async function POST(request: NextRequest) {
     // For backward compatibility, use the single page text elements if no multi-page data
     else if (textElements && textElements.length > 0) {
       textElementsInfo = '\n\nText elements on the canvas:\n';
-      textElements.forEach((element, index) => {
+      textElements.forEach((element: TextElement, index: number) => {
         textElementsInfo += `${index + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
       });
     }

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PlusCircle, Edit2, Trash2, Check, X, BookOpen, Home, Archive, Settings, BookText } from 'lucide-react'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import { createClient } from '@/lib/supabase'
+
 import Image from 'next/image'
 
 interface Class {
@@ -15,14 +15,12 @@ interface Class {
 
 export default function ClassesPage() {
   const [classes, setClasses] = useState<Class[]>([])
-  const [isAddingClass, setIsAddingClass] = useState(false)
   const [editingClassId, setEditingClassId] = useState<string | null>(null)
   const [newClassTitle, setNewClassTitle] = useState('')
   const [newClassDescription, setNewClassDescription] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('home')
   const router = useRouter()
-  const supabase = createClient()
 
   // Load classes from local storage on component mount
   useEffect(() => {
@@ -415,7 +413,7 @@ export default function ClassesPage() {
                 {/* Empty State */}
                 {classes.length === 0 && activeTab === 'home' && (
                   <div className="col-span-3 text-center py-12">
-                    <p className="text-gray-500 mb-4">You haven't created any courses yet.</p>
+                    <p className="text-gray-500">You haven&apos;t created any courses yet.</p>
                     <button
                       onClick={() => setActiveTab('new')}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"

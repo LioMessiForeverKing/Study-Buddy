@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       allPagesData.forEach((page, pageIdx) => {
         if (page.textElements && page.textElements.length > 0) {
           textElementsInfo += `\nPage ${page.pageNumber}${pageIdx === currentPageIndex ? ' (Current Page)' : ''}:\n`;
-          page.textElements.forEach((element: any, elemIdx: number) => {
+          page.textElements.forEach((element: { text: string; x: number; y: number }, elemIdx: number) => {
             textElementsInfo += `  ${elemIdx + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
           });
         } else {
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     // For backward compatibility, use the single page text elements if no multi-page data
     else if (textElements && textElements.length > 0) {
       textElementsInfo = '\n\nText elements on the canvas:\n';
-      textElements.forEach((element: any, index: number) => {
+      textElements.forEach((element: { text: string; x: number; y: number }, index: number) => {
         textElementsInfo += `${index + 1}. Text: "${element.text}" at position (${element.x}, ${element.y})\n`;
       });
     }

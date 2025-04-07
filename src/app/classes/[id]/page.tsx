@@ -12,13 +12,12 @@ interface Class {
   description: string
 }
 
-interface ClassPageProps {
-  params: {
-    id: string
-  }
+type PageProps = {
+  params: { id: string }
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export default function ClassPage({ params }: ClassPageProps) {
+export default function ClassPage({ params }: PageProps) {
   const [classData, setClassData] = useState<Class | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
