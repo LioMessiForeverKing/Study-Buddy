@@ -1,20 +1,18 @@
-'use client'
-
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
+  const pathname = usePathname()
 
   useEffect(() => {
+    const supabase = createClient()
+
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        
-        console.log('Protected route - Auth check:', session ? 'Authenticated' : 'Not authenticated')
         
         if (!session) {
           console.log('No active session, redirecting to home page')
@@ -22,14 +20,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           return
         }
 
-        // If user is authenticated and on the home page, redirect to classes
-        if (window.location.pathname === '/') {
+        // Only redirect to /classes if user is authenticated and on the home page
+        if (session && pathname === '/') {
           console.log('Authenticated user on home page, redirecting to classes')
           router.push('/classes')
           return
         }
         
-        console.log('User authenticated, allowing access to protected route')
       } catch (error) {
         console.error('Auth check error:', error)
         router.push('/')
@@ -38,16 +35,23 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       }
     }
 
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        router.push('/')
+      }
+    })
+
     checkAuth()
-  }, [])
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router, pathname])
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#4285F4]"></div>
-      </div>
-    )
+    return <div>Loading...</div> // Or your loading component
   }
 
-  return <>{children}</>
+  return children
 }

@@ -2,9 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { PlusCircle, Edit2, Trash2, Check, X, BookOpen, Home, Archive, Settings, BookText } from 'lucide-react'
+import { 
+  PlusCircle, 
+  Edit2, 
+  Trash2, 
+  Check, 
+  X, 
+  BookOpen, 
+  Home, 
+  Archive, 
+  Settings, 
+  BookText, 
+  Sparkles,
+  LogOut
+} from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-
 import Image from 'next/image'
 
 interface Class {
@@ -21,6 +34,16 @@ export default function ClassesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('home')
   const router = useRouter()
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    try {
+      await supabase.auth.signOut()
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   // Load classes from local storage on component mount
   useEffect(() => {
@@ -193,6 +216,15 @@ export default function ClassesPage() {
                 >
                   <Settings className="mr-3" size={20} />
                   <span>Settings</span>
+                </button>
+              </li>
+              <li className="border-t border-gray-200 mt-4 pt-4">
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                >
+                  <LogOut className="mr-3" size={20} />
+                  <span>Sign Out</span>
                 </button>
               </li>
             </ul>

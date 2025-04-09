@@ -1,51 +1,25 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/utils/supabase/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const next = requestUrl.searchParams.get('next') || '/classes'
 
   if (code) {
-    // Await the cookies() function as required by Next.js
-    const cookieStore = await cookies()
-    const response = NextResponse.redirect(new URL('/notepad', request.url))
+    const supabase = createClient()
+    
+    try {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) throw error
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            // Use the awaited cookieStore
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            response.cookies.set(name, value, options)
-          },
-          remove(name: string, options: CookieOptions) {
-            response.cookies.set(name, '', { ...options, maxAge: -1 })
-          },
-        },
-      }
-    )
-
-    await supabase.auth.exchangeCodeForSession(code)
-
-    return response
+      return NextResponse.redirect(new URL(next, request.url))
+    } catch (error) {
+      console.error('Auth callback error:', error)
+      return NextResponse.redirect(new URL('/', request.url))
+    }
   }
 
   return NextResponse.redirect(new URL('/', request.url))
-}
-
-interface CookieOptions {
-  name?: string
-  value?: string
-  path?: string
-  domain?: string
-  maxAge?: number
-  httpOnly?: boolean
-  secure?: boolean
-  sameSite?: 'strict' | 'lax' | 'none'
-  priority?: 'low' | 'medium' | 'high'
 }
