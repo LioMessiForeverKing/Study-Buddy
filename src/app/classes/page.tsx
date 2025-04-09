@@ -20,6 +20,7 @@ import Image from 'next/image'
 import YubiCompanion from '@/components/YubiCompanion'
 import YubiPersonalization from '@/components/YubiPersonalization'
 import { createClient } from '@/utils/supabase/client'
+import { getUserSettings } from '@/utils/supabase/user-settings'
 
 const yubiVariants = [
   '/Yubi1.svg',
@@ -48,6 +49,7 @@ export default function ClassesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAddingClass, setIsAddingClass] = useState(false)
   const [showYubiPersonalization, setShowYubiPersonalization] = useState(false)
+  const [needsOnboarding, setNeedsOnboarding] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -66,6 +68,18 @@ export default function ClassesPage() {
       localStorage.setItem('userClasses', JSON.stringify(classes))
     }
   }, [classes, isLoading])
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const settings = await getUserSettings()
+        setNeedsOnboarding(!settings)
+      } catch (error) {
+        console.error('Error checking onboarding status:', error)
+      }
+    }
+    checkOnboarding()
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -184,6 +198,23 @@ export default function ClassesPage() {
                 </button>
               </div>
             </div>
+
+            {needsOnboarding && (
+              <div className="mb-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Image src="/Yubi-happy.svg" alt="Yubi" width={40} height={40} />
+                    <p className="text-purple-700">Hey there! Let's make your learning experience more personal!</p>
+                  </div>
+                  <button
+                    onClick={() => router.push('/settings/onboarding')}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Complete Setup
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Classes Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
