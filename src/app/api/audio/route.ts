@@ -5,6 +5,43 @@ import fs from 'fs';
 import mime from 'mime-types';
 import { NextRequest } from 'next/server';
 
+// Add interfaces
+interface TextElement {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  fontSize: number;
+  isDragging: boolean;
+}
+
+interface CanvasPage {
+  id: string;
+  textElements: TextElement[];
+  imageData?: string;
+  pageNumber?: number;
+}
+
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface YubiPersonalization {
+  learningStyle: string;
+  interests: string[];
+  communicationStyle: string;
+  motivationType: string;
+  customPrompts: {
+    question: string;
+    response: string;
+  }[];
+}
+
+// Also add pageFileUris variable declaration
+let pageFileUris: { pageNumber: number; fileUri: string; }[] = [];
+
 // Initialize Gemini API client and file manager
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
@@ -95,9 +132,22 @@ export async function POST(request: NextRequest) {
       currentPageIndex = 0, 
       history = [], 
       textElements = [],
-      personalization  // Add this to destructuring
+      personalization
     } = await request.json();
-    
+
+    // Process canvas data if available
+    let canvasInlineData: { fileData: { mimeType: string; fileUri: string; } } | undefined;
+    if (canvasData) {
+      const base64CanvasData = canvasData.split(',')[1];
+      const canvasFileUri = await uploadCanvasData(base64CanvasData);
+      canvasInlineData = {
+        fileData: {
+          mimeType: 'image/png',
+          fileUri: canvasFileUri
+        }
+      };
+    }
+
     // Add detailed logging for personalization data
     console.log('Received personalization data:', {
       learningStyle: personalization?.learningStyle,
@@ -118,34 +168,6 @@ export async function POST(request: NextRequest) {
     // Upload audio to Gemini
     const file = await uploadToGemini(audioData, mimeType);
 
-    // Process canvas data if provided (for backward compatibility)
-    let canvasInlineData = null;
-    if (canvasData) {
-      const base64CanvasData = canvasData.split(',')[1];
-      const canvasFileUri = await uploadCanvasData(base64CanvasData);
-      canvasInlineData = {
-        fileData: {
-          mimeType: "image/png",
-          fileUri: canvasFileUri
-        }
-      };
-    }
-    
-    // Process all pages data if available
-    const pageFileUris = [];
-    if (allPagesData && allPagesData.length > 0) {
-      for (const page of allPagesData) {
-        if (page.imageData) {
-          const base64Data = page.imageData.split(',')[1];
-          const fileUri = await uploadCanvasData(base64Data);
-          pageFileUris.push({
-            pageNumber: page.pageNumber,
-            fileUri: fileUri
-          });
-        }
-      }
-    }
-    
     // Initialize model with configuration
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash-thinking-exp-01-21',
@@ -157,44 +179,17 @@ export async function POST(request: NextRequest) {
       console.log('Applying personalization to prompt...');
       const { learningStyle, interests, communicationStyle, motivationType } = personalization;
       
-      personalizedPrompt = `${prompt}\n\nUser Preferences and Teaching Instructions:
+      personalizedPrompt = `${prompt}\n\nUser Preferences:
 - Learning Style: ${learningStyle}. Adapt explanations to favor ${learningStyle.toLowerCase()} learning approaches.
-- Interests: ${interests.join(', ')}. IMPORTANT: Use these topics for analogies and examples. For instance, if explaining a concept and the user is interested in astronomy, relate it to celestial bodies, space exploration, or cosmic phenomena.
+- Interests: ${interests.join(', ')}. Use these topics for examples when relevant.
 - Communication Style: ${communicationStyle}. Maintain this tone in responses.
-- Motivation Type: ${motivationType}. Frame encouragement around this motivation style.
+- Motivation Type: ${motivationType}. Frame encouragement around this motivation style.`;
 
-Teaching Strategy:
-1. When explaining new concepts, actively look for opportunities to draw parallels with ${interests.join(' or ')}.
-2. Use the user's interests to create memorable analogies that make complex ideas more relatable.
-3. Start responses with a relevant connection to their interests when possible.
-4. If multiple interests are available, vary which ones you reference to keep engagement high.`;
-
-      console.log('Final personalized prompt with interest-based instruction:', personalizedPrompt);
+      console.log('Final personalized prompt:', personalizedPrompt);
     } else {
       console.log('No personalization data available, using base prompt');
     }
 
-    // Define interfaces for type safety
-    interface TextElement {
-      id?: string;
-      x: number;
-      y: number;
-      text: string;
-      color?: string;
-      fontSize?: number;
-    }
-    
-    interface CanvasPage {
-      pageNumber: number;
-      textElements?: TextElement[];
-      imageData?: string;
-    }
-    
-    interface ConversationMessage {
-      role: string;
-      content: string;
-    }
-    
     // Format conversation history for Gemini API
     const formattedHistory = history.map((msg: ConversationMessage) => ({
       role: msg.role === 'assistant' ? 'model' : msg.role,

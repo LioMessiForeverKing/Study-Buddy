@@ -2,30 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  PlusCircle, 
-  Edit2, 
-  Trash2, 
-  Check, 
-  X, 
-  BookOpen, 
-  Home, 
-  Archive, 
-  Settings, 
-  BookText, 
-  Sparkles,
-  LogOut
-} from 'lucide-react'
-import { createClient } from '@/utils/supabase/client'
+import { PlusCircle, Edit2, Trash2, Check, X, BookOpen, Home, Archive, Settings, LogOut } from 'lucide-react'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import Image from 'next/image'
+import YubiCompanion from '@/components/YubiCompanion'
 import YubiPersonalization from '@/components/YubiPersonalization'
-import YubiCompanion from '../../components/YubiCompanion'
+import { createClient } from '@/utils/supabase/client'
+
+const yubiVariants = [
+  '/Yubi1.svg',
+  '/Yubi2.svg',
+  '/Yubi3.svg',
+  '/Yubi-happy.svg',
+  '/Yubi-proud.svg'
+]
+
+const getRandomYubiVariant = () => {
+  return yubiVariants[Math.floor(Math.random() * yubiVariants.length)]
+}
 
 interface Class {
   id: string
   title: string
   description: string
+  yubiVariant?: string
 }
 
 export default function ClassesPage() {
@@ -34,20 +34,10 @@ export default function ClassesPage() {
   const [newClassTitle, setNewClassTitle] = useState('')
   const [newClassDescription, setNewClassDescription] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('home')
-  const [showYubiPersonalization, setShowYubiPersonalization] = useState(false)
   const [isAddingClass, setIsAddingClass] = useState(false)
+  const [showYubiPersonalization, setShowYubiPersonalization] = useState(false)
   const router = useRouter()
-
-  const handleLogout = async () => {
-    const supabase = createClient()
-    try {
-      await supabase.auth.signOut()
-      router.push('/')
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
+  const supabase = createClient()
 
   // Load classes from local storage on component mount
   useEffect(() => {
@@ -65,19 +55,21 @@ export default function ClassesPage() {
     }
   }, [classes, isLoading])
 
-  // Generate a unique ID for new classes
-  const generateId = () => {
-    return Date.now().toString()
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
   }
 
-  // Add a new class
+  const generateId = () => Date.now().toString()
+
   const addClass = () => {
     if (newClassTitle.trim() === '') return
     
     const newClass: Class = {
       id: generateId(),
       title: newClassTitle,
-      description: newClassDescription
+      description: newClassDescription,
+      yubiVariant: getRandomYubiVariant()
     }
     
     setClasses([...classes, newClass])
@@ -86,14 +78,12 @@ export default function ClassesPage() {
     setIsAddingClass(false)
   }
 
-  // Start editing a class
   const startEditingClass = (classItem: Class) => {
     setEditingClassId(classItem.id)
     setNewClassTitle(classItem.title)
     setNewClassDescription(classItem.description)
   }
 
-  // Save class edits
   const saveClassEdit = (id: string) => {
     setClasses(classes.map(classItem => 
       classItem.id === id 
@@ -105,389 +95,205 @@ export default function ClassesPage() {
     setNewClassDescription('')
   }
 
-  // Cancel editing
   const cancelEditing = () => {
     setEditingClassId(null)
     setNewClassTitle('')
     setNewClassDescription('')
   }
 
-  // Delete a class
   const deleteClass = (id: string) => {
     setClasses(classes.filter(classItem => classItem.id !== id))
   }
 
-  // Navigate to the notepad page for a specific class
   const goToNotepad = (classId: string) => {
     router.push(`/classes/${classId}`)
   }
 
-  // Get subject icon based on class title
-  const getSubjectIcon = (title: string) => {
-    const lowerTitle = title.toLowerCase()
-    if (lowerTitle.includes('english')) return '/monkey-english.svg'
-    if (lowerTitle.includes('history')) return '/monkey-history.svg'
-    if (lowerTitle.includes('algebra') || lowerTitle.includes('math')) return '/monkey-algebra.svg'
-    if (lowerTitle.includes('science')) return '/monkey-science.svg'
-    if (lowerTitle.includes('art')) return '/monkey-art.svg'
+  const archiveClass = (classToArchive: Class) => {
+    // Remove from current classes
+    setClasses(classes.filter(c => c.id !== classToArchive.id))
     
-    // Default icons based on first letter
-    const firstChar = lowerTitle.charAt(0)
-    if ('abc'.includes(firstChar)) return '/monkey-english.svg'
-    if ('def'.includes(firstChar)) return '/monkey-history.svg'
-    if ('ghij'.includes(firstChar)) return '/monkey-algebra.svg'
-    if ('klmn'.includes(firstChar)) return '/monkey-science.svg'
-    if ('opqr'.includes(firstChar)) return '/monkey-art.svg'
+    // Add to archived classes
+    const archivedClass = {
+      ...classToArchive,
+      archivedDate: new Date().toISOString()
+    }
     
-    return '/monkey-english.svg' // Default
-  }
-
-  // Get gradient background based on class title
-  const getGradientBackground = (title: string) => {
-    const lowerTitle = title.toLowerCase()
-    if (lowerTitle.includes('english')) return 'bg-gradient-to-br from-cyan-100 to-cyan-300'
-    if (lowerTitle.includes('history')) return 'bg-gradient-to-br from-pink-100 to-purple-300'
-    if (lowerTitle.includes('algebra') || lowerTitle.includes('math')) return 'bg-gradient-to-br from-yellow-100 to-yellow-300'
-    if (lowerTitle.includes('science')) return 'bg-gradient-to-br from-green-100 to-blue-300'
-    if (lowerTitle.includes('art')) return 'bg-gradient-to-br from-orange-100 to-red-300'
-    
-    // Default gradients based on first letter
-    const firstChar = lowerTitle.charAt(0)
-    if ('abc'.includes(firstChar)) return 'bg-gradient-to-br from-cyan-100 to-cyan-300'
-    if ('def'.includes(firstChar)) return 'bg-gradient-to-br from-pink-100 to-purple-300'
-    if ('ghij'.includes(firstChar)) return 'bg-gradient-to-br from-yellow-100 to-yellow-300'
-    if ('klmn'.includes(firstChar)) return 'bg-gradient-to-br from-green-100 to-blue-300'
-    if ('opqr'.includes(firstChar)) return 'bg-gradient-to-br from-orange-100 to-red-300'
-    
-    return 'bg-gradient-to-br from-blue-100 to-blue-300' // Default
+    const currentArchived = JSON.parse(localStorage.getItem('archivedClasses') || '[]')
+    localStorage.setItem('archivedClasses', JSON.stringify([...currentArchived, archivedClass]))
   }
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen bg-gray-50">
-        <div className="flex">
-          {/* Sidebar */}
-          <div className="w-64 bg-white border-r border-gray-200 min-h-screen">
-            <div className="p-4 flex items-center gap-2">
-              <Image src="/Yubi2.svg" alt="StudyBuddy Logo" width={40} height={40} />
-              <h1 className="text-xl font-bold">StudyBuddy</h1>
-            </div>
-            
-            <nav className="mt-6">
-              <ul className="space-y-2">
-                <li>
-                  <button 
-                    className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors"
-                    onClick={() => setActiveTab('home')}
-                  >
-                    <Home className="mr-3" size={20} />
-                    <span>Home</span>
-                  </button>
-                </li>
-                
-                {/* Dynamic class navigation items */}
-                {classes.map((classItem) => (
-                  <li key={classItem.id}>
-                    <button 
-                      className={`flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors ${activeTab === classItem.id ? 'bg-gray-100 text-blue-500' : ''}`}
-                      onClick={() => setActiveTab(classItem.id)}
-                    >
-                      <BookText className="mr-3" size={20} />
-                      <span>{classItem.title}</span>
-                    </button>
-                  </li>
-                ))}
-                <li className="border-t border-gray-200 mt-4 pt-4">
-                  <button 
-                    className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors"
-                    onClick={() => setActiveTab('new')}
-                  >
-                    <PlusCircle className="mr-3" size={20} />
-                    <span>New Course</span>
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors"
-                    onClick={() => setActiveTab('archived')}
-                  >
-                    <Archive className="mr-3" size={20} />
-                    <span>Archived Courses</span>
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-blue-500 transition-colors"
-                  >
-                    <Settings className="mr-3" size={20} />
-                    <span>Settings</span>
-                  </button>
-                </li>
-                <li className="border-t border-gray-200 mt-4 pt-4">
-                  <button 
-                    onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
-                  >
-                    <LogOut className="mr-3" size={20} />
-                    <span>Sign Out</span>
-                  </button>
-                </li>
-              </ul>
+      <div className="flex h-screen bg-gray-50">
+        {/* Sidebar */}
+        <div className="w-64 bg-white shadow-lg">
+          <div className="p-4">
+            <Image src="/Yubi2.svg" alt="Yubi Mascot" width={150} height={150} className="mb-8" />
+            <nav className="space-y-2">
+              <a href="/classes" className="flex items-center gap-2 p-2 bg-blue-50 text-blue-600 rounded">
+                <Home className="w-5 h-5" />
+                Classes
+              </a>
+              <a href="/archive" className="flex items-center gap-2 p-2 text-gray-600 hover:bg-gray-50 rounded">
+                <Archive className="w-5 h-5" />
+                Archive
+              </a>
+              <a href="/settings" className="flex items-center gap-2 p-2 text-gray-600 hover:bg-gray-50 rounded">
+                <Settings className="w-5 h-5" />
+                Settings
+              </a>
             </nav>
           </div>
+          <div className="absolute bottom-0 left-0 w-64 p-4">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 w-full p-2 text-red-600 hover:bg-red-50 rounded"
+            >
+              <LogOut className="w-5 h-5" />
+              Logout
+            </button>
+          </div>
+        </div>
 
-          {/* Main Content */}
-          <div className="flex-1 p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold">Your Courses</h1>
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto px-8 py-8">
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
               <button
-                onClick={() => setShowYubiPersonalization(true)}
-                className="px-4 py-2 bg-gradient-to-r from-[#4285F4] to-[#34A853] text-white rounded-full hover:from-[#FBBC05] hover:to-[#EA4335] transition-all shadow-lg flex items-center gap-2"
+                onClick={() => setIsAddingClass(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <Sparkles size={18} />
-                Personalize Yubi
+                <PlusCircle className="w-5 h-5" />
+                Add Class
               </button>
             </div>
-            <div className="max-w-6xl mx-auto">
-              {/* Header */}
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">Your Courses</h1>
-                <p className="text-gray-600 mt-2">Jump back in — brush up on your skills or learn something new!</p>
-                
-                {/* Tabs */}
-                <div className="flex mt-6 border-b border-gray-200 overflow-x-auto pb-1">
-                  {/* Fixed tabs */}
-                  <button 
-                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'home' ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setActiveTab('home')}
-                  >
-                    Home
-                  </button>
-                  
-                  {/* Dynamic class tabs */}
-                  {classes.length > 0 && classes.map((classItem) => (
-                    <button 
-                      key={classItem.id}
-                      className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === classItem.id ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-500 hover:text-gray-700'}`}
-                      onClick={() => setActiveTab(classItem.id)}
-                    >
-                      {classItem.title}
-                    </button>
-                  ))}
-                  
-                  {/* Additional fixed tabs */}
-                  <button 
-                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'new' ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setActiveTab('new')}
-                  >
-                    New Course
-                  </button>
-                  <button 
-                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'archived' ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setActiveTab('archived')}
-                  >
-                    Archived Courses
-                  </button>
-                </div>
-              </div>
 
-              {/* New Class Form */}
-              {activeTab === 'new' && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                  <h2 className="text-xl font-semibold mb-4">Create New Course</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="classTitle" className="block text-sm font-medium text-gray-700 mb-1">
-                        Course Title
-                      </label>
-                      <input
-                        type="text"
-                        id="classTitle"
-                        value={newClassTitle}
-                        onChange={(e) => setNewClassTitle(e.target.value)}
-                        placeholder="Enter course title"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="classDescription" className="block text-sm font-medium text-gray-700 mb-1">
-                        Description
-                      </label>
-                      <input
-                        type="text"
-                        id="classDescription"
-                        value={newClassDescription}
-                        onChange={(e) => setNewClassDescription(e.target.value)}
-                        placeholder="Enter description"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex justify-end">
+            {isAddingClass && (
+              <div className="mb-8 p-6 bg-white rounded-lg shadow">
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Class Title"
+                    value={newClassTitle}
+                    onChange={(e) => setNewClassTitle(e.target.value)}
+                    className="w-full p-2 border rounded"
+                  />
+                  <textarea
+                    placeholder="Class Description"
+                    value={newClassDescription}
+                    onChange={(e) => setNewClassDescription(e.target.value)}
+                    className="w-full p-2 border rounded"
+                  />
+                  <div className="flex gap-2">
                     <button
                       onClick={addClass}
-                      disabled={!newClassTitle.trim()}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
-                      Create Course
+                      Add
+                    </button>
+                    <button
+                      onClick={() => setIsAddingClass(false)}
+                      className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                    >
+                      Cancel
                     </button>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Course Grid */}
-              {(activeTab === 'home' || activeTab.match(/english|history|algebra|science|art/) || classes.some(c => c.id === activeTab)) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Filter classes based on active tab */}
-                  {classes
-                    .filter(classItem => {
-                      if (activeTab === 'home') return true;
-                      if (activeTab === classItem.id) return true;
-                      return classItem.title.toLowerCase().includes(activeTab);
-                    })
-                    .map((classItem) => (
-                      <div 
-                        key={classItem.id} 
-                        className={`rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg ${getGradientBackground(classItem.title)}`}
-                      >
-                        {editingClassId === classItem.id ? (
-                          <div className="p-4 bg-white space-y-3">
-                            <div className="space-y-1">
-                              <label htmlFor={`editTitle-${classItem.id}`} className="block text-sm font-medium text-gray-700">
-                                Course Title
-                              </label>
-                              <input
-                                type="text"
-                                id={`editTitle-${classItem.id}`}
-                                value={newClassTitle}
-                                onChange={(e) => setNewClassTitle(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label htmlFor={`editDescription-${classItem.id}`} className="block text-sm font-medium text-gray-700">
-                                Description
-                              </label>
-                              <input
-                                type="text"
-                                id={`editDescription-${classItem.id}`}
-                                value={newClassDescription}
-                                onChange={(e) => setNewClassDescription(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </div>
-                            <div className="flex items-center gap-2 pt-2">
-                              <button
-                                onClick={() => saveClassEdit(classItem.id)}
-                                disabled={!newClassTitle.trim()}
-                                className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <Check size={18} />
-                              </button>
-                              <button
-                                onClick={cancelEditing}
-                                className="p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
-                              >
-                                <X size={18} />
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="p-6 flex justify-center">
-                              <Image 
-                                src={getSubjectIcon(classItem.title)} 
-                                alt={classItem.title} 
-                                width={120} 
-                                height={120} 
-                                className="object-contain"
-                              />
-                            </div>
-                            <div className="p-4 bg-white">
-                              <h3 className="text-xl font-bold mb-1">{classItem.title}</h3>
-                              <p className="text-gray-600 mb-4 text-sm">{classItem.description}</p>
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => startEditingClass(classItem)}
-                                    className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                                  >
-                                    <Edit2 size={16} />
-                                  </button>
-                                  <button
-                                    onClick={() => deleteClass(classItem.id)}
-                                    className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </div>
-                                <button
-                                  onClick={() => goToNotepad(classItem.id)}
-                                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
-                                >
-                                  <BookOpen size={16} />
-                                  Open
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {classes.map((classItem) => (
+                <div key={classItem.id} className="bg-white rounded-lg shadow p-6">
+                  {editingClassId === classItem.id ? (
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        value={newClassTitle}
+                        onChange={(e) => setNewClassTitle(e.target.value)}
+                        className="w-full p-2 border rounded"
+                      />
+                      <textarea
+                        value={newClassDescription}
+                        onChange={(e) => setNewClassDescription(e.target.value)}
+                        className="w-full p-2 border rounded"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => saveClassEdit(classItem.id)}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded"
+                        >
+                          <Check className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={cancelEditing}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
                       </div>
-                    ))}
-
-                  {/* New Course Card */}
-                  {activeTab === 'home' && (
-                    <div 
-                      className="rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer"
-                      onClick={() => setActiveTab('new')}
-                    >
-                      <div className="p-6 flex justify-center">
-                        <Image 
-                          src="/new-course.svg" 
-                          alt="New Course" 
-                          width={120} 
-                          height={120} 
-                          className="object-contain"
-                        />
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-4">
+                          <Image 
+                            src={classItem.yubiVariant || '/Yubi2.svg'} 
+                            alt="Yubi Logo" 
+                            width={40} 
+                            height={40} 
+                            className="animate-bounce-slow"
+                          />
+                          <h2 className="text-xl font-semibold text-gray-900">{classItem.title}</h2>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startEditingClass(classItem)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteClass(classItem.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="p-4 bg-white text-center">
-                        <h3 className="text-xl font-bold mb-1">New Course</h3>
-                        <p className="text-gray-600 mb-4 text-sm">Create a new course to get started</p>
+                      <p className="text-gray-600 mb-4">{classItem.description}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => goToNotepad(classItem.id)}
+                          className="flex-1 py-2 px-4 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          Open Notes
+                        </button>
+                        <button
+                          onClick={() => archiveClass(classItem)}
+                          className="py-2 px-4 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors flex items-center justify-center"
+                        >
+                          <Archive className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   )}
-
-                  {/* Empty State */}
-                  {classes.length === 0 && activeTab === 'home' && (
-                    <div className="col-span-3 text-center py-12">
-                      <p className="text-gray-500">You haven&apos;t created any courses yet.</p>
-                      <button
-                        onClick={() => setActiveTab('new')}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
-                      >
-                        <PlusCircle size={18} />
-                        Create Your First Course
-                      </button>
-                    </div>
-                  )}
                 </div>
-              )}
-
-              {/* Archived Courses */}
-              {activeTab === 'archived' && (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">No archived courses found.</p>
-                </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
+
+        {/* Keep YubiCompanion */}
         <YubiCompanion />
         <YubiPersonalization 
           isOpen={showYubiPersonalization} 
           onClose={() => setShowYubiPersonalization(false)} 
         />
-      </main>
+      </div>
     </ProtectedRoute>
   )
 }

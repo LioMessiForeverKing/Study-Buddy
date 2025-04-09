@@ -61,9 +61,20 @@ export default function YubiPersonalization({
 
   useEffect(() => {
     if (settings) {
+      console.log('Saving personalization settings:', settings);
       localStorage.setItem('yubiPersonalization', JSON.stringify(settings))
     }
   }, [settings])
+
+  // Add logging when settings are loaded
+  useEffect(() => {
+    const saved = localStorage.getItem('yubiPersonalization')
+    if (saved) {
+      console.log('Loaded saved personalization settings:', JSON.parse(saved));
+    } else {
+      console.log('No saved personalization settings found');
+    }
+  }, [])
 
   if (!isOpen) return null
 

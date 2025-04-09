@@ -1,0 +1,22 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Base Face -->
+  <circle cx="100" cy="100" r="70" fill="#B3E5FC"/>
+  
+  <!-- Ears -->
+  <ellipse cx="40" cy="70" rx="20" ry="25" fill="#B3E5FC"/>
+  <ellipse cx="160" cy="70" rx="20" ry="25" fill="#B3E5FC"/>
+  
+  <!-- Hair/Top of Head -->
+  <path d="M60 50C70 30 130 30 140 50C150 70 150 70 140 80C130 90 70 90 60 80C50 70 50 70 60 50Z" fill="#212121"/>
+  
+  <!-- Proud Eyes -->
+  <path d="M70 85C75 80 85 80 90 85" stroke="#212121" stroke-width="4" stroke-linecap="round"/>
+  <path d="M110 85C115 80 125 80 130 85" stroke="#212121" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Proud Smile -->
+  <path d="M85 115C95 125 105 125 115 115" stroke="#212121" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Crown -->
+  <path d="M70 40L100 20L130 40" stroke="#FFD700" stroke-width="4"/>
+  <path d="M70 40L130 40" stroke="#FFD700" stroke-width="4"/>
+</svg>

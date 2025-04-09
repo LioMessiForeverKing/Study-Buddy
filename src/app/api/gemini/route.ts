@@ -75,6 +75,14 @@ export async function POST(request: NextRequest) {
     // Get image data, question, and conversation history from request
     const { imageData, allPagesData = [], currentPageIndex = 0, question, history = [], textElements = [], personalization } = await request.json();
     
+    console.log('Received personalization data:', {
+      learningStyle: personalization?.learningStyle,
+      communicationStyle: personalization?.communicationStyle,
+      motivationType: personalization?.motivationType,
+      interestsCount: personalization?.interests?.length,
+      customPromptsCount: personalization?.customPrompts?.length
+    });
+
     if ((!imageData && !allPagesData.length) || !question) {
       console.error('Missing required image data or question');
       return new Response(JSON.stringify({ error: 'Missing required data' }), {

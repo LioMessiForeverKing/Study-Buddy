@@ -1,0 +1,23 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Base Face -->
+  <circle cx="100" cy="100" r="70" fill="#B3E5FC"/>
+  
+  <!-- Ears -->
+  <ellipse cx="40" cy="70" rx="20" ry="25" fill="#B3E5FC"/>
+  <ellipse cx="160" cy="70" rx="20" ry="25" fill="#B3E5FC"/>
+  
+  <!-- Hair/Top of Head -->
+  <path d="M60 50C70 30 130 30 140 50C150 70 150 70 140 80C130 90 70 90 60 80C50 70 50 70 60 50Z" fill="#212121"/>
+  
+  <!-- Sleepy Eyes -->
+  <path d="M75 90C80 90 85 90 90 90" stroke="#212121" stroke-width="4" stroke-linecap="round"/>
+  <path d="M115 90C120 90 125 90 130 90" stroke="#212121" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Sleepy Mouth -->
+  <path d="M90 120C95 115 105 115 110 120" stroke="#212121" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- ZZZ -->
+  <path d="M140 60L150 50L140 40" stroke="#212121" stroke-width="2"/>
+  <path d="M130 50L140 40L130 30" stroke="#212121" stroke-width="2"/>
+  <path d="M120 40L130 30L120 20" stroke="#212121" stroke-width="2"/>
+</svg>
