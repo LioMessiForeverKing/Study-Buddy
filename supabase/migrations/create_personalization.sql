@@ -24,3 +24,6 @@ create policy "Users can update their own personalization"
 create policy "Users can insert their own personalization"
   on public.user_personalization for insert
   with check (auth.uid() = id);
+
+  //#endregion
+//#endregion
