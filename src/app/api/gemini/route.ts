@@ -1,8 +1,14 @@
 "use server"
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, Content, Part } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'fs';
 import { NextRequest } from 'next/server';
+
+// Add the ConversationMessage interface
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 // Initialize Gemini API client and file manager
 const apiKey = process.env.GEMINI_API_KEY;
@@ -90,9 +96,9 @@ export async function POST(request: NextRequest) {
     });
     
     // Format conversation history for Gemini API
-    const formattedHistory = history.map((msg: { role: string; content: string }) => ({
+    const formattedHistory: Content[] = history.map((msg: ConversationMessage) => ({
       role: msg.role === 'assistant' ? 'model' : msg.role,
-      parts: [{ text: msg.content }]
+      parts: [{ text: msg.content }] as Part[]
     }));
     
     // Start chat session with conversation history
@@ -109,7 +115,7 @@ export async function POST(request: NextRequest) {
     if (allPagesData && allPagesData.length > 0) {
       textElementsInfo = '\n\nCanvas contains multiple pages with the following elements:\n';
       
-      allPagesData.forEach((page, pageIdx) => {
+      allPagesData.forEach((page: { textElements: { text: string; x: number; y: number; }[]; pageNumber: any; }, pageIdx: any) => {
         if (page.textElements && page.textElements.length > 0) {
           textElementsInfo += `\nPage ${page.pageNumber}${pageIdx === currentPageIndex ? ' (Current Page)' : ''}:\n`;
           page.textElements.forEach((element: { text: string; x: number; y: number }, elemIdx: number) => {
@@ -129,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Send message with canvas images and text elements info
-    const messageParts = [
+    const messageParts: Part[] = [
       { text: question + textElementsInfo }
     ];
     
@@ -142,8 +148,8 @@ export async function POST(request: NextRequest) {
           fileData: {
             mimeType: 'image/png',
             fileUri: currentPageUri,
-          },
-        });
+          }
+        } as Part);
       }
       
       // Then add other page images
@@ -153,8 +159,8 @@ export async function POST(request: NextRequest) {
             fileData: {
               mimeType: 'image/png',
               fileUri: page.fileUri,
-            },
-          });
+            }
+          } as Part);
         }
       }
     } 
@@ -164,8 +170,8 @@ export async function POST(request: NextRequest) {
         fileData: {
           mimeType: 'image/png',
           fileUri: canvasFileUri,
-        },
-      });
+        }
+      } as Part);
     }
     
     const result = await chatSession.sendMessage(messageParts);

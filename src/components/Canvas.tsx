@@ -26,6 +26,12 @@ interface CanvasPage {
   imageData?: string
 }
 
+interface PageDataWithImage {
+  id: string
+  imageData: string
+  textElements: TextElement[]
+}
+
 interface CanvasProps {
   width?: number
   height?: number
@@ -86,26 +92,63 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
     }
   }
 
+  // Add this function to get all pages data
+  const getAllPagesData = (): PageDataWithImage[] => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      // If no canvas, create a blank white image data
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+      const ctx = tempCanvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+      }
+      const blankImageData = tempCanvas.toDataURL('image/png');
+      
+      return pages.map(page => ({
+        id: page.id,
+        imageData: page.imageData || blankImageData,
+        textElements: page.textElements
+      }));
+    }
+
+    // Save current page before getting all data
+    saveCurrentPage();
+
+    return pages.map(page => ({
+      id: page.id,
+      imageData: page.imageData || canvas.toDataURL('image/png'),
+      textElements: page.textElements
+    }));
+  };
+
   // Update handleAudioSubmit to use speech synthesis
   const handleAudioSubmit = async (audioData: string, mimeType: string) => {
     try {
       setIsProcessingAudio(true)
       setAnalysis(null)
       
-      // Save the current page before processing audio
       saveCurrentPage()
       
       const canvas = canvasRef.current
       const currentCanvasData = canvas ? canvas.toDataURL('image/png') : null
       
-      // Prepare all pages data to send to Gemini
-      const allPagesData = pages.map((page, index) => ({
-        pageNumber: index + 1,
-        imageData: index === currentPageIndex ? currentCanvasData : page.imageData,
-        textElements: index === currentPageIndex ? textElements : page.textElements
-      }))
+      // Get all pages data with guaranteed imageData
+      const allPagesData = getAllPagesData()
       
-      const updatedHistory = [...conversationHistory, { role: 'user', content: question }]
+      // Create a properly typed new message
+      const newUserMessage: ConversationMessage = {
+        role: 'user' as const,
+        content: question
+      }
+      
+      // Create a properly typed updated history array
+      const updatedHistory: ConversationMessage[] = [
+        ...conversationHistory,
+        newUserMessage
+      ]
       setConversationHistory(updatedHistory)
 
       const response = await fetch('/api/audio', {
@@ -128,9 +171,15 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
       const formattedAnalysis = await marked(data.analysis)
       setAnalysis(formattedAnalysis)
       
-      setConversationHistory([...updatedHistory, { role: 'assistant', content: data.analysis }])
+      // Create a properly typed assistant message
+      const assistantMessage: ConversationMessage = {
+        role: 'assistant' as const,
+        content: data.analysis
+      }
       
-      // Speak the response
+      // Update the conversation history with properly typed messages
+      setConversationHistory([...updatedHistory, assistantMessage])
+      
       speakText(data.analysis)
     } catch (error) {
       console.error('Error processing audio:', error)
@@ -327,17 +376,13 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
   const saveCurrentPage = () => {
     const canvas = canvasRef.current
     if (!canvas) return
-    
-    // Create a copy of the pages array
+
     const updatedPages = [...pages]
-    
-    // Update the current page with the latest text elements and canvas image
     updatedPages[currentPageIndex] = {
       ...updatedPages[currentPageIndex],
-      textElements: textElements,
-      imageData: canvas.toDataURL('image/png')
+      imageData: canvas.toDataURL('image/png'),
+      textElements: textElements
     }
-    
     setPages(updatedPages)
   }
   
@@ -394,9 +439,17 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
         textElements: index === currentPageIndex ? textElements : page.textElements
       }))
       
-      const updatedHistory = [...conversationHistory, { role: 'user', content: question }]
+      const newUserMessage: ConversationMessage = {
+        role: 'user' as const,
+        content: question
+      }
+      
+      const updatedHistory: ConversationMessage[] = [
+        ...conversationHistory,
+        newUserMessage
+      ]
       setConversationHistory(updatedHistory)
-  
+
       const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
