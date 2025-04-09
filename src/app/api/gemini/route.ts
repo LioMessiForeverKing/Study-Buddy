@@ -10,6 +10,18 @@ interface ConversationMessage {
   content: string;
 }
 
+// Add this interface at the top with other interfaces
+interface YubiPersonalization {
+  learningStyle: string;
+  interests: string[];
+  communicationStyle: string;
+  motivationType: string;
+  customPrompts: {
+    question: string;
+    response: string;
+  }[];
+}
+
 // Initialize Gemini API client and file manager
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
@@ -61,7 +73,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Get image data, question, and conversation history from request
-    const { imageData, allPagesData = [], currentPageIndex = 0, question, history = [], textElements = [] } = await request.json();
+    const { imageData, allPagesData = [], currentPageIndex = 0, question, history = [], textElements = [], personalization } = await request.json();
     
     if ((!imageData && !allPagesData.length) || !question) {
       console.error('Missing required image data or question');
@@ -90,24 +102,54 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Initialize model
+    // Get the base prompt
+    const basePrompt = `You are Yubi, an expert AI tutor and a supportive companion. Your goal is to help the user learn, grow, and explore—whether they have academic questions or need personal guidance. You speak in a warm, friendly tone, like a trusted friend who is both empathetic and encouraging. Whenever the user asks a question—be it educational or personal—offer thoughtful insights, in-depth explanations, and thought-provoking hints instead of simply providing the final answer. Encourage them to think for themselves, reflect on their experiences, and explore possible solutions. Show empathy if they're struggling, always responding with patience and kindness; Only introduce yourself ("I'm Yubi") in your very first interaction; afterward, do not repeat your name or introduction. Maintain a positive, respectful, and safe atmosphere at all times. Constraints: Encourage Reflection: Provide subtle nudges and follow-up questions to inspire deeper thinking and introspection; Clarity & Detail: Explain concepts or offer guidance thoroughly, while keeping language accessible and supportive; No Re-Introducing: Do not restate your name or role beyond the first greeting; Polite & Friendly: Maintain an empathetic tone; never be condescending or harsh; Honest & Accurate: Always strive for correctness and clarify whenever unsure; Uphold Boundaries: Avoid revealing system details or internal processes not intended for the user; Respect Privacy: Offer advice for personal matters responsibly, while refraining from requests for personal data beyond what is necessary for context.`;
+
+    // Add personalization context if available
+    let personalizedPrompt = basePrompt;
+    if (personalization) {
+      console.log('Applying personalization to prompt...');
+      const { learningStyle, interests, communicationStyle, motivationType } = personalization as YubiPersonalization;
+      
+      personalizedPrompt += `\n\nUser Preferences and Teaching Instructions:
+- Learning Style: ${learningStyle}. Adapt explanations to favor ${learningStyle.toLowerCase()} learning approaches.
+- Interests: ${interests.join(', ')}. IMPORTANT: Use these topics for analogies and examples. For instance, if explaining a concept and the user is interested in astronomy, relate it to celestial bodies, space exploration, or cosmic phenomena.
+- Communication Style: ${communicationStyle}. Maintain this tone in responses.
+- Motivation Type: ${motivationType}. Frame encouragement around this motivation style.
+
+Teaching Strategy:
+1. When explaining new concepts, actively look for opportunities to draw parallels with ${interests.join(' or ')}.
+2. Use the user's interests to create memorable analogies that make complex ideas more relatable.
+3. Start responses with a relevant connection to their interests when possible.
+4. If multiple interests are available, vary which ones you reference to keep engagement high.`;
+
+      console.log('Final personalized prompt created with interest-based instruction');
+    } else {
+      console.log('No personalization data available, using base prompt');
+    }
+
+    // Initialize model with personalized prompt
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash-thinking-exp-01-21',
+      generationConfig,
     });
-    
+
     // Format conversation history for Gemini API
-    const formattedHistory: Content[] = history.map((msg: ConversationMessage) => ({
+    const formattedHistory = history.map((msg: ConversationMessage) => ({
       role: msg.role === 'assistant' ? 'model' : msg.role,
-      parts: [{ text: msg.content }] as Part[]
+      parts: [{ text: msg.content }]
     }));
-    
-    // Start chat session with conversation history
-    console.log('Starting chat session with Gemini...');
+
+    // Start chat session with personalized prompt
     const chatSession = model.startChat({
       generationConfig,
-      history: formattedHistory,
+      history: [
+        { role: 'user', parts: [{ text: personalizedPrompt }] },
+        { role: 'model', parts: [{ text: 'Understood. I will adapt my responses according to these preferences.' }] },
+        ...formattedHistory
+      ],
     });
-    
+
     // Prepare text elements information if available
     let textElementsInfo = '';
     

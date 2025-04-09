@@ -127,29 +127,35 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
   // Update handleAudioSubmit to use speech synthesis
   const handleAudioSubmit = async (audioData: string, mimeType: string) => {
     try {
-      setIsProcessingAudio(true)
-      setAnalysis(null)
+      setIsProcessingAudio(true);
+      setAnalysis(null);
       
-      saveCurrentPage()
+      saveCurrentPage();
       
-      const canvas = canvasRef.current
-      const currentCanvasData = canvas ? canvas.toDataURL('image/png') : null
+      const canvas = canvasRef.current;
+      const currentCanvasData = canvas ? canvas.toDataURL('image/png') : null;
       
       // Get all pages data with guaranteed imageData
-      const allPagesData = getAllPagesData()
+      const allPagesData = getAllPagesData();
       
+      // Get personalization data from localStorage
+      const personalizationData = localStorage.getItem('yubiPersonalization');
+      const personalization = personalizationData ? JSON.parse(personalizationData) : null;
+      
+      console.log('Sending personalization data:', personalization);
+
       // Create a properly typed new message
       const newUserMessage: ConversationMessage = {
         role: 'user' as const,
         content: question
-      }
+      };
       
       // Create a properly typed updated history array
       const updatedHistory: ConversationMessage[] = [
         ...conversationHistory,
         newUserMessage
-      ]
-      setConversationHistory(updatedHistory)
+      ];
+      setConversationHistory(updatedHistory);
 
       const response = await fetch('/api/audio', {
         method: 'POST',
@@ -158,13 +164,14 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
           audioData,
           mimeType,
           prompt: question,
-          canvasData: currentCanvasData, // Keep for backward compatibility
-          allPagesData, // Send all pages data
+          canvasData: currentCanvasData,
+          allPagesData,
           currentPageIndex,
           history: updatedHistory,
-          textElements: textElements // Keep for backward compatibility
+          textElements,
+          personalization  // Add personalization data to the request
         })
-      })
+      });
 
       if (!response.ok) throw new Error('Failed to process audio')
       const data = await response.json()

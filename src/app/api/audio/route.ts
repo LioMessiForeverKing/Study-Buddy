@@ -86,8 +86,27 @@ export async function POST(request: NextRequest) {
   
   try {
     // Get audio data and conversation history from request
-    const { audioData, mimeType, prompt, canvasData, allPagesData = [], currentPageIndex = 0, history = [], textElements = [] } = await request.json();
+    const { 
+      audioData, 
+      mimeType, 
+      prompt, 
+      canvasData, 
+      allPagesData = [], 
+      currentPageIndex = 0, 
+      history = [], 
+      textElements = [],
+      personalization  // Add this to destructuring
+    } = await request.json();
     
+    // Add detailed logging for personalization data
+    console.log('Received personalization data:', {
+      learningStyle: personalization?.learningStyle,
+      communicationStyle: personalization?.communicationStyle,
+      motivationType: personalization?.motivationType,
+      interests: personalization?.interests,
+      customPromptsCount: personalization?.customPrompts?.length
+    });
+
     if (!audioData || !mimeType || !prompt) {
       console.error('Missing required audio data or mime type');
       return new Response(JSON.stringify({ error: 'Missing required audio data' }), {
@@ -127,11 +146,34 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Initialize model
+    // Initialize model with configuration
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash-thinking-exp-01-21',
     });
-    
+
+    // Add personalization context if available
+    let personalizedPrompt = prompt;
+    if (personalization) {
+      console.log('Applying personalization to prompt...');
+      const { learningStyle, interests, communicationStyle, motivationType } = personalization;
+      
+      personalizedPrompt = `${prompt}\n\nUser Preferences and Teaching Instructions:
+- Learning Style: ${learningStyle}. Adapt explanations to favor ${learningStyle.toLowerCase()} learning approaches.
+- Interests: ${interests.join(', ')}. IMPORTANT: Use these topics for analogies and examples. For instance, if explaining a concept and the user is interested in astronomy, relate it to celestial bodies, space exploration, or cosmic phenomena.
+- Communication Style: ${communicationStyle}. Maintain this tone in responses.
+- Motivation Type: ${motivationType}. Frame encouragement around this motivation style.
+
+Teaching Strategy:
+1. When explaining new concepts, actively look for opportunities to draw parallels with ${interests.join(' or ')}.
+2. Use the user's interests to create memorable analogies that make complex ideas more relatable.
+3. Start responses with a relevant connection to their interests when possible.
+4. If multiple interests are available, vary which ones you reference to keep engagement high.`;
+
+      console.log('Final personalized prompt with interest-based instruction:', personalizedPrompt);
+    } else {
+      console.log('No personalization data available, using base prompt');
+    }
+
     // Define interfaces for type safety
     interface TextElement {
       id?: string;
@@ -158,7 +200,7 @@ export async function POST(request: NextRequest) {
       role: msg.role === 'assistant' ? 'model' : msg.role,
       parts: [{ text: msg.content }]
     }));
-    
+
     // Start chat session with conversation history
     console.log('Starting chat session with Gemini...');
     const chatSession = model.startChat({
@@ -194,7 +236,7 @@ export async function POST(request: NextRequest) {
     }
     
     const messageParts = [
-      { text: prompt + textElementsInfo },
+      { text: personalizedPrompt + textElementsInfo },
       {
         fileData: {
           mimeType: file.mimeType,
