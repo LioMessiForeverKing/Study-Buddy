@@ -2,17 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-
-interface YubiPersonalization {
-  learningStyle: string
-  interests: string[]
-  communicationStyle: string
-  motivationType: string
-  customPrompts: {
-    question: string
-    response: string
-  }[]
-}
+import { savePersonalization, getPersonalization, UserPersonalization } from '@/utils/supabase/database'
 
 const LEARNING_STYLES = [
   'Visual',
@@ -42,39 +32,42 @@ export default function YubiPersonalization({
   isOpen: boolean
   onClose: () => void 
 }) {
-  const [settings, setSettings] = useState<YubiPersonalization>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('yubiPersonalization')
-      return saved ? JSON.parse(saved) : {
-        learningStyle: 'Visual',
-        interests: [],
-        communicationStyle: 'Encouraging & Supportive',
-        motivationType: 'Curiosity-led',
-        customPrompts: []
+  const [settings, setSettings] = useState<Omit<UserPersonalization, 'id'>>({
+    learning_style: 'Visual',
+    interests: [],
+    communication_style: 'Encouraging & Supportive',
+    motivation_type: 'Curiosity-led',
+    custom_prompts: []
+  });
+
+  useEffect(() => {
+    const loadPersonalization = async () => {
+      try {
+        const data = await getPersonalization();
+        if (data) {
+          setSettings(data);
+        }
+      } catch (error) {
+        console.error('Error loading personalization:', error);
       }
+    };
+
+    if (isOpen) {
+      loadPersonalization();
     }
-    return null
-  })
+  }, [isOpen]);
+
+  const handleSave = async () => {
+    try {
+      await savePersonalization(settings);
+      onClose();
+    } catch (error) {
+      console.error('Error saving personalization:', error);
+    }
+  };
 
   const [newInterest, setNewInterest] = useState('')
   const [newPrompt, setNewPrompt] = useState({ question: '', response: '' })
-
-  useEffect(() => {
-    if (settings) {
-      console.log('Saving personalization settings:', settings);
-      localStorage.setItem('yubiPersonalization', JSON.stringify(settings))
-    }
-  }, [settings])
-
-  // Add logging when settings are loaded
-  useEffect(() => {
-    const saved = localStorage.getItem('yubiPersonalization')
-    if (saved) {
-      console.log('Loaded saved personalization settings:', JSON.parse(saved));
-    } else {
-      console.log('No saved personalization settings found');
-    }
-  }, [])
 
   if (!isOpen) return null
 
@@ -97,9 +90,9 @@ export default function YubiPersonalization({
             {LEARNING_STYLES.map(style => (
               <button
                 key={style}
-                onClick={() => setSettings(prev => ({ ...prev, learningStyle: style }))}
+                onClick={() => setSettings(prev => ({ ...prev, learning_style: style }))}
                 className={`p-3 rounded-lg border transition-all ${
-                  settings.learningStyle === style 
+                  settings.learning_style === style 
                     ? 'border-blue-500 bg-blue-50' 
                     : 'border-gray-200 hover:border-blue-200'
                 }`}
@@ -168,9 +161,9 @@ export default function YubiPersonalization({
             {COMMUNICATION_STYLES.map(style => (
               <button
                 key={style}
-                onClick={() => setSettings(prev => ({ ...prev, communicationStyle: style }))}
+                onClick={() => setSettings(prev => ({ ...prev, communication_style: style }))}
                 className={`p-3 rounded-lg border transition-all ${
-                  settings.communicationStyle === style 
+                  settings.communication_style === style 
                     ? 'border-blue-500 bg-blue-50' 
                     : 'border-gray-200 hover:border-blue-200'
                 }`}
@@ -190,9 +183,9 @@ export default function YubiPersonalization({
             {MOTIVATION_TYPES.map(type => (
               <button
                 key={type}
-                onClick={() => setSettings(prev => ({ ...prev, motivationType: type }))}
+                onClick={() => setSettings(prev => ({ ...prev, motivation_type: type }))}
                 className={`p-3 rounded-lg border transition-all ${
-                  settings.motivationType === type 
+                  settings.motivation_type === type 
                     ? 'border-blue-500 bg-blue-50' 
                     : 'border-gray-200 hover:border-blue-200'
                 }`}
@@ -209,7 +202,7 @@ export default function YubiPersonalization({
             Custom Interactions (Optional)
           </label>
           <div className="space-y-4">
-            {settings.customPrompts.map((prompt, index) => (
+            {settings.custom_prompts.map((prompt, index) => (
               <div key={index} className="p-3 border border-gray-200 rounded-lg">
                 <div className="flex justify-between">
                   <div>
@@ -219,7 +212,7 @@ export default function YubiPersonalization({
                   <button
                     onClick={() => setSettings(prev => ({
                       ...prev,
-                      customPrompts: prev.customPrompts.filter((_, i) => i !== index)
+                      custom_prompts: prev.custom_prompts.filter((_, i) => i !== index)
                     }))}
                     className="text-red-500 hover:text-red-600"
                   >
@@ -248,7 +241,7 @@ export default function YubiPersonalization({
                   if (newPrompt.question.trim() && newPrompt.response.trim()) {
                     setSettings(prev => ({
                       ...prev,
-                      customPrompts: [...prev.customPrompts, newPrompt]
+                      custom_prompts: [...prev.custom_prompts, newPrompt]
                     }))
                     setNewPrompt({ question: '', response: '' })
                   }
@@ -260,6 +253,12 @@ export default function YubiPersonalization({
             </div>
           </div>
         </div>
+        <button
+          onClick={handleSave}
+          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
+        >
+          Save Preferences
+        </button>
       </div>
     </div>
   )

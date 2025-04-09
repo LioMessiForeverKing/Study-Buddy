@@ -2,7 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { PlusCircle, Edit2, Trash2, Check, X, BookOpen, Home, Archive, Settings, LogOut } from 'lucide-react'
+import { 
+  PlusCircle, 
+  Edit2, 
+  Trash2, 
+  Check, 
+  X, 
+  Home, 
+  Archive, 
+  Settings, 
+  LogOut, 
+  Sliders,
+  BookOpen 
+} from 'lucide-react'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import Image from 'next/image'
 import YubiCompanion from '@/components/YubiCompanion'
@@ -159,52 +171,32 @@ export default function ClassesPage() {
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto px-8 py-8">
+            {/* Header with Yubi Personalization */}
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
-              <button
-                onClick={() => setIsAddingClass(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <PlusCircle className="w-5 h-5" />
-                Add Class
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setShowYubiPersonalization(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  <Sliders className="w-5 h-5" />
+                  Customize Yubi
+                </button>
+              </div>
             </div>
 
-            {isAddingClass && (
-              <div className="mb-8 p-6 bg-white rounded-lg shadow">
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Class Title"
-                    value={newClassTitle}
-                    onChange={(e) => setNewClassTitle(e.target.value)}
-                    className="w-full p-2 border rounded"
-                  />
-                  <textarea
-                    placeholder="Class Description"
-                    value={newClassDescription}
-                    onChange={(e) => setNewClassDescription(e.target.value)}
-                    className="w-full p-2 border rounded"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={addClass}
-                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                      Add
-                    </button>
-                    <button
-                      onClick={() => setIsAddingClass(false)}
-                      className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
+            {/* Classes Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Add Class Card */}
+              <div 
+                onClick={() => setIsAddingClass(true)}
+                className="bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-200 p-6 hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px]"
+              >
+                <PlusCircle className="w-12 h-12 text-gray-400 mb-4" />
+                <p className="text-gray-600 font-medium">Add New Class</p>
+              </div>
+
+              {/* Existing Classes */}
               {classes.map((classItem) => (
                 <div key={classItem.id} className="bg-white rounded-lg shadow p-6">
                   {editingClassId === classItem.id ? (
@@ -287,7 +279,42 @@ export default function ClassesPage() {
           </div>
         </div>
 
-        {/* Keep YubiCompanion */}
+        {/* Add Class Modal */}
+        {isAddingClass && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md">
+              <h2 className="text-2xl font-bold mb-4">Add New Class</h2>
+              <input
+                type="text"
+                placeholder="Class Title"
+                value={newClassTitle}
+                onChange={(e) => setNewClassTitle(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg mb-4"
+              />
+              <textarea
+                placeholder="Class Description"
+                value={newClassDescription}
+                onChange={(e) => setNewClassDescription(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg mb-4 h-32"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setIsAddingClass(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={addClass}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Add Class
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <YubiCompanion />
         <YubiPersonalization 
           isOpen={showYubiPersonalization} 
