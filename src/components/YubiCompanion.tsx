@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Flame, Trophy, Target, Sparkles } from 'lucide-react'
 import gsap from 'gsap'
+import { getUserSettings } from '@/utils/supabase/user-settings'
 
 interface YubiStats {
   name: string
@@ -25,6 +26,12 @@ interface YubiStats {
       question: string
       response: string
     }[]
+  }
+  userSettings?: {
+    display_name: string
+    age_group: string
+    education_level: string
+    study_goals: string[]
   }
 }
 
@@ -80,6 +87,25 @@ export default function YubiCompanion() {
     })
   }, [])
 
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        const settings = await getUserSettings()
+        if (settings) {
+          setStats(prev => ({
+            ...prev,
+            name: settings.display_name,
+            userSettings: settings
+          }))
+        }
+      } catch (error) {
+        console.error('Error loading user settings:', error)
+      }
+    }
+    
+    loadUserSettings()
+  }, [])
+
   const completeSetup = (name: string) => {
     setStats(prev => ({
       ...prev,
@@ -102,11 +128,18 @@ export default function YubiCompanion() {
 
   const getYubiResponse = (message: string) => {
     const personalization = stats?.personalization
+    const userSettings = stats?.userSettings
     
-    console.log('YubiCompanion personalization data:', {
-      available: !!personalization,
-      data: personalization
-    });
+    // Include user's name and education level in the response context
+    const userName = userSettings?.display_name || stats.name
+    const educationLevel = userSettings?.education_level
+    const studyGoals = userSettings?.study_goals || []
+    
+    console.log('Generating response with user context:', {
+      name: userName,
+      educationLevel,
+      studyGoals
+    })
 
     // Check for custom prompts first
     const customPrompt = personalization?.customPrompts.find(

@@ -132,7 +132,8 @@ export async function POST(request: NextRequest) {
       currentPageIndex = 0, 
       history = [], 
       textElements = [],
-      personalization
+      personalization,
+      userSettings  // Add this new parameter
     } = await request.json();
 
     // Process canvas data if available
@@ -175,17 +176,25 @@ export async function POST(request: NextRequest) {
 
     // Add personalization context if available
     let personalizedPrompt = prompt;
-    if (personalization) {
-      console.log('Applying personalization to prompt...');
-      const { learningStyle, interests, communicationStyle, motivationType } = personalization;
+    if (personalization || userSettings) {
+      const userName = userSettings?.display_name || 'student';
+      const educationLevel = userSettings?.education_level;
+      const studyGoals = userSettings?.study_goals;
       
-      personalizedPrompt = `${prompt}\n\nUser Preferences:
-- Learning Style: ${learningStyle}. Adapt explanations to favor ${learningStyle.toLowerCase()} learning approaches.
-- Interests: ${interests.join(', ')}. Use these topics for examples when relevant.
-- Communication Style: ${communicationStyle}. Maintain this tone in responses.
-- Motivation Type: ${motivationType}. Frame encouragement around this motivation style.`;
+      personalizedPrompt = `${prompt}\n\nUser Context:
+- Name: ${userName}. Please address the user as ${userName} in responses.
+- Education Level: ${educationLevel}
+- Study Goals: ${studyGoals?.join(', ')}
 
-      console.log('Final personalized prompt:', personalizedPrompt);
+User Preferences:
+- Learning Style: ${personalization?.learningStyle}
+- Interests: ${personalization?.interests?.join(', ')}
+- Communication Style: ${personalization?.communicationStyle}
+- Motivation Type: ${personalization?.motivationType}`;
+
+      if (studyGoals?.length > 0) {
+        personalizedPrompt += `\n\nAlign responses with the user's study goals: ${studyGoals.join(', ')}`;
+      }
     } else {
       console.log('No personalization data available, using base prompt');
     }

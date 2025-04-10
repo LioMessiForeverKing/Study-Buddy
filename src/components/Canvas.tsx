@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { AudioRecorder } from './AudioRecorder'
-import { marked } from 'marked';
-import { X, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { marked } from 'marked'
+import { X, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { getUserSettings } from '@/utils/supabase/user-settings'
 
 interface Point {
   x: number
@@ -40,8 +41,8 @@ interface CanvasProps {
 
 // Define a type for conversation messages
 interface ConversationMessage {
-  role: 'user' | 'assistant';
-  content: string;
+  role: 'user' | 'assistant'
+  content: string
 }
 
 export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasProps) {
@@ -142,7 +143,11 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
       const personalizationData = localStorage.getItem('yubiPersonalization');
       const personalization = personalizationData ? JSON.parse(personalizationData) : null;
       
+      // Get user settings
+      const userSettings = await getUserSettings();
+      
       console.log('Sending personalization data:', personalization);
+      console.log('Sending user settings:', userSettings);
 
       // Create a properly typed new message
       const newUserMessage: ConversationMessage = {
@@ -169,7 +174,8 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
           currentPageIndex,
           history: updatedHistory,
           textElements,
-          personalization  // Add personalization data to the request
+          personalization,  // Add personalization data to the request
+          userSettings  // Add user settings to the request
         })
       });
 

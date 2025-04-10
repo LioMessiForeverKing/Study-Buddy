@@ -73,7 +73,16 @@ export async function POST(request: NextRequest) {
   
   try {
     // Get image data, question, and conversation history from request
-    const { imageData, allPagesData = [], currentPageIndex = 0, question, history = [], textElements = [], personalization } = await request.json();
+    const { 
+      imageData, 
+      allPagesData = [], 
+      currentPageIndex = 0, 
+      question, 
+      history = [], 
+      textElements = [], 
+      personalization,
+      userSettings  // Add this new parameter
+    } = await request.json();
     
     console.log('Received personalization data:', {
       learningStyle: personalization?.learningStyle,
@@ -115,23 +124,27 @@ export async function POST(request: NextRequest) {
 
     // Add personalization context if available
     let personalizedPrompt = basePrompt;
-    if (personalization) {
+    if (personalization || userSettings) {
       console.log('Applying personalization to prompt...');
-      const { learningStyle, interests, communicationStyle, motivationType } = personalization as YubiPersonalization;
       
-      personalizedPrompt += `\n\nUser Preferences and Teaching Instructions:
-- Learning Style: ${learningStyle}. Adapt explanations to favor ${learningStyle.toLowerCase()} learning approaches.
-- Interests: ${interests.join(', ')}. IMPORTANT: Use these topics for analogies and examples. For instance, if explaining a concept and the user is interested in astronomy, relate it to celestial bodies, space exploration, or cosmic phenomena.
-- Communication Style: ${communicationStyle}. Maintain this tone in responses.
-- Motivation Type: ${motivationType}. Frame encouragement around this motivation style.
+      const userName = userSettings?.display_name || 'student';
+      const educationLevel = userSettings?.education_level;
+      const studyGoals = userSettings?.study_goals;
+      
+      personalizedPrompt += `\n\nUser Context:
+- Name: ${userName}. Please address the user as ${userName} in responses.
+- Education Level: ${educationLevel}
+- Study Goals: ${studyGoals?.join(', ')}
 
-Teaching Strategy:
-1. When explaining new concepts, actively look for opportunities to draw parallels with ${interests.join(' or ')}.
-2. Use the user's interests to create memorable analogies that make complex ideas more relatable.
-3. Start responses with a relevant connection to their interests when possible.
-4. If multiple interests are available, vary which ones you reference to keep engagement high.`;
+User Preferences and Teaching Instructions:
+- Learning Style: ${personalization?.learningStyle}
+- Interests: ${personalization?.interests?.join(', ')}
+- Communication Style: ${personalization?.communicationStyle}
+- Motivation Type: ${personalization?.motivationType}`;
 
-      console.log('Final personalized prompt created with interest-based instruction');
+      if (studyGoals?.length > 0) {
+        personalizedPrompt += `\n\nAlign responses with the user's study goals: ${studyGoals.join(', ')}`;
+      }
     } else {
       console.log('No personalization data available, using base prompt');
     }
