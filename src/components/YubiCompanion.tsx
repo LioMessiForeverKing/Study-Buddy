@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Flame, Trophy, Target, Sparkles } from 'lucide-react'
 import gsap from 'gsap'
 import { getUserSettings } from '@/utils/supabase/user-settings'
+import { getPersonalization } from '@/utils/supabase/database'
 
 interface YubiStats {
   name: string
@@ -36,24 +37,18 @@ interface YubiStats {
 }
 
 export default function YubiCompanion() {
-  const [stats, setStats] = useState<YubiStats>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('yubiStats')
-      return saved ? JSON.parse(saved) : {
-        name: '',
-        streak: 0,
-        lastStudied: new Date().toISOString(),
-        totalHours: 0,
-        level: 1,
-        mood: 'happy',
-        goals: {
-          daily: 2,
-          weekly: 10
-        }
-      }
+  const [stats, setStats] = useState<YubiStats>(() => ({
+    name: '',
+    streak: 0,
+    lastStudied: new Date().toISOString(),
+    totalHours: 0,
+    level: 1,
+    mood: 'happy',
+    goals: {
+      daily: 2,
+      weekly: 10
     }
-    return null
-  })
+  }))
 
   const [isFirstTime, setIsFirstTime] = useState(true)
   const [showSetup, setShowSetup] = useState(false)
@@ -104,6 +99,30 @@ export default function YubiCompanion() {
     }
     
     loadUserSettings()
+  }, [])
+
+  useEffect(() => {
+    const loadPersonalization = async () => {
+      try {
+        const personalizationData = await getPersonalization()
+        if (personalizationData) {
+          setStats(prev => ({
+            ...prev,
+            personalization: {
+              learningStyle: personalizationData.learning_style,
+              interests: personalizationData.interests,
+              communicationStyle: personalizationData.communication_style,
+              motivationType: personalizationData.motivation_type,
+              customPrompts: personalizationData.custom_prompts
+            }
+          }))
+        }
+      } catch (error) {
+        console.error('Error loading personalization:', error)
+      }
+    }
+
+    loadPersonalization()
   }, [])
 
   const completeSetup = (name: string) => {

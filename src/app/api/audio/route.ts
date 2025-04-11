@@ -28,15 +28,15 @@ interface ConversationMessage {
   content: string;
 }
 
-interface YubiPersonalization {
-  learningStyle: string;
+interface UserPersonalization {
+  learning_style: string;
   interests: string[];
-  communicationStyle: string;
-  motivationType: string;
-  customPrompts: {
+  communication_style: string;
+  motivation_type: string;
+  custom_prompts: Array<{
     question: string;
     response: string;
-  }[];
+  }>;
 }
 
 // Also add pageFileUris variable declaration
@@ -132,8 +132,8 @@ export async function POST(request: NextRequest) {
       currentPageIndex = 0, 
       history = [], 
       textElements = [],
-      personalization,
-      userSettings  // Add this new parameter
+      personalizationData,  // Changed from personalization
+      userSettings
     } = await request.json();
 
     // Process canvas data if available
@@ -149,13 +149,13 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Add detailed logging for personalization data
+    // Add detailed logging for personalization data with correct property names
     console.log('Received personalization data:', {
-      learningStyle: personalization?.learningStyle,
-      communicationStyle: personalization?.communicationStyle,
-      motivationType: personalization?.motivationType,
-      interests: personalization?.interests,
-      customPromptsCount: personalization?.customPrompts?.length
+      learning_style: personalizationData?.learning_style,
+      communication_style: personalizationData?.communication_style,
+      motivation_type: personalizationData?.motivation_type,
+      interests: personalizationData?.interests,
+      custom_prompts_count: personalizationData?.custom_prompts?.length
     });
 
     if (!audioData || !mimeType || !prompt) {
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
 
     // Add personalization context if available
     let personalizedPrompt = prompt;
-    if (personalization || userSettings) {
+    if (personalizationData || userSettings) {
       const userName = userSettings?.display_name || 'student';
       const educationLevel = userSettings?.education_level;
       const studyGoals = userSettings?.study_goals;
@@ -187,10 +187,10 @@ export async function POST(request: NextRequest) {
 - Study Goals: ${studyGoals?.join(', ')}
 
 User Preferences:
-- Learning Style: ${personalization?.learningStyle}
-- Interests: ${personalization?.interests?.join(', ')}
-- Communication Style: ${personalization?.communicationStyle}
-- Motivation Type: ${personalization?.motivationType}`;
+- Learning Style: ${personalizationData?.learning_style}
+- Interests: ${personalizationData?.interests?.join(', ')}
+- Communication Style: ${personalizationData?.communication_style}
+- Motivation Type: ${personalizationData?.motivation_type}`;
 
       if (studyGoals?.length > 0) {
         personalizedPrompt += `\n\nAlign responses with the user's study goals: ${studyGoals.join(', ')}`;

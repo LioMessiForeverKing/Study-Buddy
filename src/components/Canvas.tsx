@@ -5,6 +5,7 @@ import { AudioRecorder } from './AudioRecorder'
 import { marked } from 'marked'
 import { X, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { getUserSettings } from '@/utils/supabase/user-settings'
+import { getPersonalization } from '@/utils/supabase/database'
 
 interface Point {
   x: number
@@ -136,31 +137,36 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
       const canvas = canvasRef.current;
       const currentCanvasData = canvas ? canvas.toDataURL('image/png') : null;
       
-      // Get all pages data with guaranteed imageData
       const allPagesData = getAllPagesData();
       
-      // Get personalization data from localStorage
-      const personalizationData = localStorage.getItem('yubiPersonalization');
-      const personalization = personalizationData ? JSON.parse(personalizationData) : null;
+      // Get personalization data from Supabase
+      const personalizationData = await getPersonalization();
       
       // Get user settings
       const userSettings = await getUserSettings();
-      
-      console.log('Sending personalization data:', personalization);
-      console.log('Sending user settings:', userSettings);
 
-      // Create a properly typed new message
+      // Create the new user message
       const newUserMessage: ConversationMessage = {
         role: 'user' as const,
         content: question
       };
-      
-      // Create a properly typed updated history array
+
+      // Create updated history array
       const updatedHistory: ConversationMessage[] = [
         ...conversationHistory,
         newUserMessage
       ];
-      setConversationHistory(updatedHistory);
+
+      // Transform the data to match the expected format
+      const personalizationPayload = personalizationData ? {
+        learning_style: personalizationData.learning_style,
+        interests: personalizationData.interests,
+        communication_style: personalizationData.communication_style,
+        motivation_type: personalizationData.motivation_type,
+        custom_prompts: personalizationData.custom_prompts
+      } : null;
+      
+      console.log('Sending personalization data:', personalizationPayload);
 
       const response = await fetch('/api/audio', {
         method: 'POST',
@@ -174,31 +180,31 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
           currentPageIndex,
           history: updatedHistory,
           textElements,
-          personalization,  // Add personalization data to the request
-          userSettings  // Add user settings to the request
+          personalizationData: personalizationPayload,
+          userSettings
         })
       });
 
-      if (!response.ok) throw new Error('Failed to process audio')
-      const data = await response.json()
-      const formattedAnalysis = await marked(data.analysis)
-      setAnalysis(formattedAnalysis)
+      if (!response.ok) throw new Error('Failed to process audio');
+      const data = await response.json();
+      const formattedAnalysis = await marked(data.analysis);
+      setAnalysis(formattedAnalysis);
       
       // Create a properly typed assistant message
       const assistantMessage: ConversationMessage = {
         role: 'assistant' as const,
         content: data.analysis
-      }
+      };
       
       // Update the conversation history with properly typed messages
-      setConversationHistory([...updatedHistory, assistantMessage])
+      setConversationHistory([...updatedHistory, assistantMessage]);
       
-      speakText(data.analysis)
+      speakText(data.analysis);
     } catch (error) {
-      console.error('Error processing audio:', error)
-      setAnalysis('Error processing audio. Please try again.')
+      console.error('Error processing audio:', error);
+      setAnalysis('Error processing audio. Please try again.');
     } finally {
-      setIsProcessingAudio(false)
+      setIsProcessingAudio(false);
     }
   }
 
