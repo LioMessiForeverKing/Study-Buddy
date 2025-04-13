@@ -20,7 +20,8 @@ import Image from 'next/image'
 import YubiCompanion from '@/components/YubiCompanion'
 import YubiPersonalization from '@/components/YubiPersonalization'
 import { createClient } from '@/utils/supabase/client'
-import { getUserSettings } from '@/utils/supabase/user-settings'
+import { classesService } from '@/utils/supabase/classes'
+import type { Class } from '@/types/supabase'
 
 const yubiVariants = [
   '/Yubi1.svg',
@@ -34,13 +35,6 @@ const getRandomYubiVariant = () => {
   return yubiVariants[Math.floor(Math.random() * yubiVariants.length)]
 }
 
-interface Class {
-  id: string
-  title: string
-  description: string
-  yubiVariant?: string
-}
-
 export default function ClassesPage() {
   const [classes, setClasses] = useState<Class[]>([])
   const [editingClassId, setEditingClassId] = useState<string | null>(null)
@@ -50,36 +44,46 @@ export default function ClassesPage() {
   const [isAddingClass, setIsAddingClass] = useState(false)
   const [showYubiPersonalization, setShowYubiPersonalization] = useState(false)
   const [needsOnboarding, setNeedsOnboarding] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
-  // Load classes from local storage on component mount
   useEffect(() => {
-    const savedClasses = localStorage.getItem('userClasses')
-    if (savedClasses) {
-      setClasses(JSON.parse(savedClasses))
+    loadClasses()
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('classes_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'classes' 
+        }, 
+        () => {
+          loadClasses()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
     }
-    setIsLoading(false)
   }, [])
 
-  // Save classes to local storage whenever they change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('userClasses', JSON.stringify(classes))
+  const loadClasses = async () => {
+    try {
+      setIsLoading(true)
+      const data = await classesService.getClasses()
+      setClasses(data)
+      setError(null)
+    } catch (err) {
+      setError('Failed to load classes')
+      console.error(err)
+    } finally {
+      setIsLoading(false)
     }
-  }, [classes, isLoading])
-
-  useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        const settings = await getUserSettings()
-        setNeedsOnboarding(!settings)
-      } catch (error) {
-        console.error('Error checking onboarding status:', error)
-      }
-    }
-    checkOnboarding()
-  }, [])
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -88,20 +92,26 @@ export default function ClassesPage() {
 
   const generateId = () => Date.now().toString()
 
-  const addClass = () => {
-    if (newClassTitle.trim() === '') return
-    
-    const newClass: Class = {
-      id: generateId(),
-      title: newClassTitle,
-      description: newClassDescription,
-      yubiVariant: getRandomYubiVariant()
+  const addClass = async () => {
+    if (newClassTitle.trim() === '') {
+      return
     }
     
-    setClasses([...classes, newClass])
-    setNewClassTitle('')
-    setNewClassDescription('')
-    setIsAddingClass(false)
+    try {
+      const newClass = await classesService.addClass({
+        title: newClassTitle.trim(),
+        description: newClassDescription.trim(),
+        yubi_variant: getRandomYubiVariant()  // Changed from yubiVariant
+      })
+      
+      setClasses(prev => [newClass, ...prev])
+      setNewClassTitle('')
+      setNewClassDescription('')
+      setIsAddingClass(false)
+    } catch (err) {
+      console.error('Error adding class:', err)
+      alert(err instanceof Error ? err.message : 'Failed to add class')
+    }
   }
 
   const startEditingClass = (classItem: Class) => {
@@ -127,26 +137,28 @@ export default function ClassesPage() {
     setNewClassDescription('')
   }
 
-  const deleteClass = (id: string) => {
-    setClasses(classes.filter(classItem => classItem.id !== id))
+  const deleteClass = async (id: string) => {
+    try {
+      await classesService.deleteClass(id)
+      setClasses(prev => prev.filter(c => c.id !== id))
+    } catch (err) {
+      console.error('Error deleting class:', err)
+      // Handle error appropriately
+    }
   }
 
   const goToNotepad = (classId: string) => {
-    router.push(`/classes/${classId}`)
+    router.push(`/notepad?classId=${classId}`)
   }
 
-  const archiveClass = (classToArchive: Class) => {
-    // Remove from current classes
-    setClasses(classes.filter(c => c.id !== classToArchive.id))
-    
-    // Add to archived classes
-    const archivedClass = {
-      ...classToArchive,
-      archivedDate: new Date().toISOString()
+  const archiveClass = async (classToArchive: Class) => {
+    try {
+      await classesService.archiveClass(classToArchive.id)
+      setClasses(prev => prev.filter(c => c.id !== classToArchive.id))
+    } catch (err) {
+      console.error('Error archiving class:', err)
+      // Handle error appropriately
     }
-    
-    const currentArchived = JSON.parse(localStorage.getItem('archivedClasses') || '[]')
-    localStorage.setItem('archivedClasses', JSON.stringify([...currentArchived, archivedClass]))
   }
 
   return (
@@ -263,7 +275,7 @@ export default function ClassesPage() {
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-4">
                           <Image 
-                            src={classItem.yubiVariant || '/Yubi2.svg'} 
+                            src={classItem.yubi_variant || '/Yubi2.svg'} 
                             alt="Yubi Logo" 
                             width={40} 
                             height={40} 

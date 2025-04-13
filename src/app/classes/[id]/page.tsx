@@ -1,96 +1,81 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { ChapterManager } from '@/components/ChapterManager'
+import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { createClient } from '@/utils/supabase/client'
+import type { Class } from '@/types/supabase'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import { ArrowLeft } from 'lucide-react'
+import YubiCompanion from '@/components/YubiCompanion'
 
-interface Class {
-  id: string
-  title: string
-  description: string
-}
-
-type PageProps = {
-  params: { id: string }
-  searchParams: { [key: string]: string | string[] | undefined }
-}
-
-export default function ClassPage({ params }: PageProps) {
+export default function ClassDetailPage() {
+  const params = useParams()
+  const router = useRouter()
   const [classData, setClassData] = useState<Class | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
-  const classId = params.id
+  const [error, setError] = useState<string | null>(null)
 
-  // Load class data from local storage
   useEffect(() => {
-    if (classId) {
-      const savedClasses = localStorage.getItem('userClasses')
-      if (savedClasses) {
-        const classes = JSON.parse(savedClasses)
-        const foundClass = classes.find((c: Class) => c.id === classId)
-        if (foundClass) {
-          setClassData(foundClass)
-        } else {
-          // Class not found, redirect to classes page
-          router.push('/classes')
-        }
-      } else {
-        // No classes saved, redirect to classes page
-        router.push('/classes')
-      }
-    }
-    setIsLoading(false)
-  }, [classId, router])
+    loadClassData()
+  }, [params.id])
 
-  const goBackToClasses = () => {
-    router.push('/classes')
+  const loadClassData = async () => {
+    if (!params.id) return
+
+    try {
+      setIsLoading(true)
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .eq('id', params.id)
+        .single()
+
+      if (error) throw error
+      if (!data) throw new Error('Class not found')
+
+      setClassData(data)
+      setError(null)
+    } catch (err) {
+      console.error('Error loading class:', err)
+      setError('Failed to load class data')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <ProtectedRoute>
-    <main className="relative min-h-screen bg-white text-gray-800 overflow-hidden">
-      {/* Animated Google Gradient Background */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute top-[-200px] left-[-150px] w-[600px] h-[600px] bg-[radial-gradient(closest-side,_#4285F4,_transparent)] animate-pulse-slow blur-3xl opacity-30" />
-        <div className="absolute bottom-[-150px] right-[-150px] w-[600px] h-[600px] bg-[radial-gradient(closest-side,_#34A853,_transparent)] animate-pulse-slow blur-3xl opacity-30" />
-        <div className="absolute top-[30%] right-[20%] w-[400px] h-[400px] bg-[radial-gradient(closest-side,_#FBBC05,_transparent)] animate-pulse-slow blur-2xl opacity-20" />
+      <div className="min-h-screen bg-gray-50">
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center min-h-screen text-red-600">
+            {error}
+          </div>
+        ) : classData ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center gap-4 mb-8">
+              <Image 
+                src={classData.yubi_variant} 
+                alt="Yubi Logo" 
+                width={60} 
+                height={60} 
+              />
+              <h1 className="text-4xl font-bold text-gray-900">{classData.title}</h1>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+              <p className="text-gray-600">{classData.description}</p>
+            </div>
+
+            {/* Add your notepad component or other class-specific features here */}
+          </div>
+        ) : null}
+        <YubiCompanion />
       </div>
-
-      {/* Content */}
-      <section className="relative z-10 max-w-7xl mx-auto px-6 py-12">
-        <button
-          onClick={goBackToClasses}
-          className="flex items-center gap-2 mb-6 px-4 py-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg hover:bg-gray-100 transition-all"
-        >
-          <ArrowLeft size={18} />
-          Back to Classes
-        </button>
-
-        <div className="mb-8">
-          <h1
-            className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2"
-            style={{
-              background:
-                'linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            {classData ? classData.title : 'Loading...'}
-          </h1>
-          <p className="text-gray-600 text-lg max-w-2xl">
-            {classData ? classData.description : ''}
-          </p>
-        </div>
-
-        {/* Glassmorphic ChapterManager Wrapper */}
-        <div className="relative bg-white/70 backdrop-blur-xl border border-white/30 shadow-xl rounded-3xl p-6 md:p-8 transition-all duration-300 hover:shadow-2xl">
-          {!isLoading && classId && <ChapterManager classId={classId} />}
-        </div>
-      </section>
-    </main>
     </ProtectedRoute>
   )
 }
