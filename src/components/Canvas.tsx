@@ -6,6 +6,7 @@ import { marked } from 'marked'
 import { X, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { getUserSettings } from '@/utils/supabase/user-settings'
 import { getPersonalization } from '@/utils/supabase/database'
+import { chaptersService } from '@/utils/supabase/chapters'
 
 interface Point {
   x: number
@@ -38,6 +39,8 @@ interface CanvasProps {
   width?: number
   height?: number
   className?: string
+  chapterId: string
+  classId: string
 }
 
 // Define a type for conversation messages
@@ -46,7 +49,13 @@ interface ConversationMessage {
   content: string
 }
 
-export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasProps) {
+export function Canvas({ 
+  width = 1100, 
+  height = 1100, 
+  className = '',
+  chapterId,
+  classId 
+}: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [color, setColor] = useState('#000000')
@@ -207,6 +216,44 @@ export function Canvas({ width = 1100, height = 1100, className = '' }: CanvasPr
       setIsProcessingAudio(false);
     }
   }
+
+  // Load saved drawing when component mounts
+  useEffect(() => {
+    const loadSavedDrawing = async () => {
+      try {
+        const savedDrawing = await chaptersService.getDrawing(chapterId)
+        if (savedDrawing?.page_data) {
+          setPages(savedDrawing.page_data.pages || [{ id: '1', textElements: [] }])
+          setCurrentPageIndex(savedDrawing.page_data.currentPageIndex || 0)
+        }
+      } catch (error) {
+        console.error('Error loading drawing:', error)
+      }
+    }
+
+    loadSavedDrawing()
+  }, [chapterId])
+
+  // Save drawing when pages or current page changes
+  useEffect(() => {
+    const saveDrawing = async () => {
+      try {
+        await chaptersService.saveDrawing({
+          chapter_id: chapterId,
+          class_id: classId,
+          page_data: {
+            pages: getAllPagesData(),
+            currentPageIndex
+          }
+        })
+      } catch (error) {
+        console.error('Error saving drawing:', error)
+      }
+    }
+
+    const debounceTimer = setTimeout(saveDrawing, 1000) // Debounce save
+    return () => clearTimeout(debounceTimer)
+  }, [pages, currentPageIndex, chapterId, classId])
 
   // Initialize canvas when component mounts or when page changes
   useEffect(() => {

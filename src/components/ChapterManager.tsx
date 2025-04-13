@@ -3,12 +3,9 @@
 import { useState, useEffect } from 'react'
 import { DrawingBoard } from './DrawingBoard'
 import { PlusCircle, Edit2, Trash2, Check, X } from 'lucide-react'
-
-interface Chapter {
-  id: string
-  title: string
-  subtitle: string
-}
+import { chaptersService } from '@/utils/supabase/chapters'
+import { createClient } from '@/utils/supabase/client'
+import type { Chapter } from '@/types/supabase'
 
 interface ChapterManagerProps {
   classId: string
@@ -20,77 +17,114 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null)
   const [newChapterTitle, setNewChapterTitle] = useState('')
   const [newChapterSubtitle, setNewChapterSubtitle] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Generate a unique ID for new chapters
-  const generateId = () => {
-    return Date.now().toString()
-  }
-
-  // Load chapters from local storage on component mount
-  useEffect(() => {
-    const savedChapters = localStorage.getItem(`chapters-${classId}`)
-    if (savedChapters) {
-      setChapters(JSON.parse(savedChapters))
-    } else {
-      // Initialize with a default chapter if none exist
-      const defaultChapter = { id: '1', title: 'Chapter 1', subtitle: 'Introduction' }
-      setChapters([defaultChapter])
-      localStorage.setItem(`chapters-${classId}`, JSON.stringify([defaultChapter]))
-    }
-  }, [classId])
-
-  // Save chapters to local storage whenever they change
-  useEffect(() => {
-    if (chapters.length > 0) {
-      localStorage.setItem(`chapters-${classId}`, JSON.stringify(chapters))
-    }
-  }, [chapters, classId])
-
-  // Add a new chapter
-  const addChapter = () => {
-    if (newChapterTitle.trim() === '') return
-    
-    const newChapter: Chapter = {
-      id: generateId(),
-      title: newChapterTitle,
-      subtitle: newChapterSubtitle
-    }
-    
-    setChapters([...chapters, newChapter])
-    setNewChapterTitle('')
-    setNewChapterSubtitle('')
-    setIsAddingChapter(false)
-  }
-
-  // Start editing a chapter
   const startEditingChapter = (chapter: Chapter) => {
     setEditingChapterId(chapter.id)
     setNewChapterTitle(chapter.title)
-    setNewChapterSubtitle(chapter.subtitle)
+    setNewChapterSubtitle(chapter.subtitle || '')
   }
 
-  // Save chapter edits
-  const saveChapterEdit = (id: string) => {
-    setChapters(chapters.map(chapter => 
-      chapter.id === id 
-        ? { ...chapter, title: newChapterTitle, subtitle: newChapterSubtitle } 
-        : chapter
-    ))
-    setEditingChapterId(null)
-    setNewChapterTitle('')
-    setNewChapterSubtitle('')
-  }
-
-  // Cancel editing
   const cancelEditing = () => {
     setEditingChapterId(null)
     setNewChapterTitle('')
     setNewChapterSubtitle('')
   }
 
-  // Delete a chapter
-  const deleteChapter = (id: string) => {
-    setChapters(chapters.filter(chapter => chapter.id !== id))
+  useEffect(() => {
+    loadChapters()
+    setupRealtimeSubscription()
+  }, [classId])
+
+  const setupRealtimeSubscription = () => {
+    const supabase = createClient()
+    
+    const channel = supabase
+      .channel('chapters_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'chapters',
+          filter: `class_id=eq.${classId}`
+        }, 
+        () => {
+          loadChapters()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }
+
+  const loadChapters = async () => {
+    try {
+      setIsLoading(true)
+      const data = await chaptersService.getChapters(classId)
+      setChapters(data)
+      setError(null)
+    } catch (err) {
+      console.error('Error loading chapters:', err)
+      setError('Failed to load chapters')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const addChapter = async () => {
+    if (newChapterTitle.trim() === '') return
+    
+    try {
+      const newChapter = await chaptersService.addChapter({
+        class_id: classId,
+        title: newChapterTitle.trim(),
+        subtitle: newChapterSubtitle.trim(),
+        order_index: chapters.length
+      })
+      
+      setNewChapterTitle('')
+      setNewChapterSubtitle('')
+      setIsAddingChapter(false)
+    } catch (err) {
+      console.error('Error adding chapter:', err)
+      setError('Failed to add chapter')
+    }
+  }
+
+  const saveChapterEdit = async (id: string) => {
+    try {
+      await chaptersService.updateChapter(id, {
+        title: newChapterTitle.trim(),
+        subtitle: newChapterSubtitle.trim()
+      })
+      
+      setEditingChapterId(null)
+      setNewChapterTitle('')
+      setNewChapterSubtitle('')
+    } catch (err) {
+      console.error('Error updating chapter:', err)
+      setError('Failed to update chapter')
+    }
+  }
+
+  const deleteChapter = async (id: string) => {
+    try {
+      await chaptersService.deleteChapter(id)
+    } catch (err) {
+      console.error('Error deleting chapter:', err)
+      setError('Failed to delete chapter')
+    }
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center p-4">Loading chapters...</div>
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">{error}</div>
   }
 
   return (
@@ -228,8 +262,15 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
               </div>
             )}
             
+            {/* DrawingBoard component for each chapter */}
             <div className="border-t border-gray-200 pt-4">
-              <DrawingBoard key={chapter.id} title={chapter.title} subtitle={chapter.subtitle} />
+              <DrawingBoard 
+                chapterId={chapter.id}
+                classId={classId}
+                key={chapter.id} 
+                title={chapter.title} 
+                subtitle={chapter.subtitle || ''} 
+              />
             </div>
           </div>
         ))}
