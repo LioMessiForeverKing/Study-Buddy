@@ -21,6 +21,7 @@ import YubiCompanion from '@/components/YubiCompanion'
 import YubiPersonalization from '@/components/YubiPersonalization'
 import { createClient } from '@/utils/supabase/client'
 import { getUserSettings } from '@/utils/supabase/user-settings'
+import { getClasses, addClass, updateClass, deleteClass, archiveClass, Class } from '@/utils/supabase/classes'
 
 const yubiVariants = [
   '/Yubi1.svg',
@@ -32,13 +33,6 @@ const yubiVariants = [
 
 const getRandomYubiVariant = () => {
   return yubiVariants[Math.floor(Math.random() * yubiVariants.length)]
-}
-
-interface Class {
-  id: string
-  title: string
-  description: string
-  yubiVariant?: string
 }
 
 export default function ClassesPage() {
@@ -53,21 +47,20 @@ export default function ClassesPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  // Load classes from local storage on component mount
+  // Load classes from Supabase on component mount
   useEffect(() => {
-    const savedClasses = localStorage.getItem('userClasses')
-    if (savedClasses) {
-      setClasses(JSON.parse(savedClasses))
-    }
-    setIsLoading(false)
-  }, [])
-
-  // Save classes to local storage whenever they change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('userClasses', JSON.stringify(classes))
-    }
-  }, [classes, isLoading])
+    const loadClasses = async () => {
+      try {
+        const data = await getClasses();
+        setClasses(data);
+      } catch (error) {
+        console.error('Error loading classes:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadClasses();
+  }, []);
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -86,23 +79,24 @@ export default function ClassesPage() {
     router.push('/')
   }
 
-  const generateId = () => Date.now().toString()
-
-  const addClass = () => {
-    if (newClassTitle.trim() === '') return
+  const handleAddClass = async () => {
+    if (newClassTitle.trim() === '') return;
     
-    const newClass: Class = {
-      id: generateId(),
-      title: newClassTitle,
-      description: newClassDescription,
-      yubiVariant: getRandomYubiVariant()
+    try {
+      const newClass = await addClass({
+        title: newClassTitle,
+        description: newClassDescription,
+        yubi_variant: getRandomYubiVariant() // Note the underscore here
+      });
+      
+      setClasses([newClass, ...classes]);
+      setNewClassTitle('');
+      setNewClassDescription('');
+      setIsAddingClass(false);
+    } catch (error) {
+      console.error('Error adding class:', error);
     }
-    
-    setClasses([...classes, newClass])
-    setNewClassTitle('')
-    setNewClassDescription('')
-    setIsAddingClass(false)
-  }
+  };
 
   const startEditingClass = (classItem: Class) => {
     setEditingClassId(classItem.id)
@@ -110,16 +104,21 @@ export default function ClassesPage() {
     setNewClassDescription(classItem.description)
   }
 
-  const saveClassEdit = (id: string) => {
-    setClasses(classes.map(classItem => 
-      classItem.id === id 
-        ? { ...classItem, title: newClassTitle, description: newClassDescription } 
-        : classItem
-    ))
-    setEditingClassId(null)
-    setNewClassTitle('')
-    setNewClassDescription('')
-  }
+  const handleSaveClassEdit = async (id: string) => {
+    try {
+      const updatedClass = await updateClass(id, {
+        title: newClassTitle,
+        description: newClassDescription
+      });
+      
+      setClasses(classes.map(c => c.id === id ? updatedClass : c));
+      setEditingClassId(null);
+      setNewClassTitle('');
+      setNewClassDescription('');
+    } catch (error) {
+      console.error('Error updating class:', error);
+    }
+  };
 
   const cancelEditing = () => {
     setEditingClassId(null)
@@ -127,27 +126,27 @@ export default function ClassesPage() {
     setNewClassDescription('')
   }
 
-  const deleteClass = (id: string) => {
-    setClasses(classes.filter(classItem => classItem.id !== id))
-  }
+  const handleDeleteClass = async (id: string) => {
+    try {
+      await deleteClass(id);
+      setClasses(classes.filter(c => c.id !== id));
+    } catch (error) {
+      console.error('Error deleting class:', error);
+    }
+  };
 
   const goToNotepad = (classId: string) => {
     router.push(`/classes/${classId}`)
   }
 
-  const archiveClass = (classToArchive: Class) => {
-    // Remove from current classes
-    setClasses(classes.filter(c => c.id !== classToArchive.id))
-    
-    // Add to archived classes
-    const archivedClass = {
-      ...classToArchive,
-      archivedDate: new Date().toISOString()
+  const handleArchiveClass = async (classToArchive: Class) => {
+    try {
+      await archiveClass(classToArchive.id);
+      setClasses(classes.filter(c => c.id !== classToArchive.id));
+    } catch (error) {
+      console.error('Error archiving class:', error);
     }
-    
-    const currentArchived = JSON.parse(localStorage.getItem('archivedClasses') || '[]')
-    localStorage.setItem('archivedClasses', JSON.stringify([...currentArchived, archivedClass]))
-  }
+  };
 
   return (
     <ProtectedRoute>
@@ -245,7 +244,7 @@ export default function ClassesPage() {
                       />
                       <div className="flex gap-2">
                         <button
-                          onClick={() => saveClassEdit(classItem.id)}
+                          onClick={() => handleSaveClassEdit(classItem.id)}
                           className="p-2 text-green-600 hover:bg-green-50 rounded"
                         >
                           <Check className="w-5 h-5" />
@@ -263,7 +262,7 @@ export default function ClassesPage() {
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-4">
                           <Image 
-                            src={classItem.yubiVariant || '/Yubi2.svg'} 
+                            src={classItem.yubi_variant || '/Yubi2.svg'} 
                             alt="Yubi Logo" 
                             width={40} 
                             height={40} 
@@ -279,7 +278,7 @@ export default function ClassesPage() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => deleteClass(classItem.id)}
+                            onClick={() => handleDeleteClass(classItem.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -296,7 +295,7 @@ export default function ClassesPage() {
                           Open Notes
                         </button>
                         <button
-                          onClick={() => archiveClass(classItem)}
+                          onClick={() => handleArchiveClass(classItem)}
                           className="py-2 px-4 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors flex items-center justify-center"
                         >
                           <Archive className="w-4 h-4" />
@@ -336,7 +335,7 @@ export default function ClassesPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={addClass}
+                  onClick={handleAddClass}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   Add Class
