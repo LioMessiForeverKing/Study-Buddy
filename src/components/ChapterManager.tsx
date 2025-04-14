@@ -41,7 +41,7 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
     const supabase = createClient()
     
     const channel = supabase
-      .channel('chapters_changes')
+      .channel(`chapters_changes_${classId}`) // Make channel name unique per class
       .on('postgres_changes', 
         { 
           event: '*', 
@@ -49,7 +49,8 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
           table: 'chapters',
           filter: `class_id=eq.${classId}`
         }, 
-        () => {
+        (payload) => {
+          // Immediately load chapters when any change occurs
           loadChapters()
         }
       )
@@ -85,6 +86,9 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
         order_index: chapters.length
       })
       
+      // Immediately update the local state with the new chapter
+      setChapters(prevChapters => [...prevChapters, newChapter])
+      
       setNewChapterTitle('')
       setNewChapterSubtitle('')
       setIsAddingChapter(false)
@@ -113,6 +117,8 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
   const deleteChapter = async (id: string) => {
     try {
       await chaptersService.deleteChapter(id)
+      // Immediately update the local state by filtering out the deleted chapter
+      setChapters(prevChapters => prevChapters.filter(chapter => chapter.id !== id))
     } catch (err) {
       console.error('Error deleting chapter:', err)
       setError('Failed to delete chapter')
