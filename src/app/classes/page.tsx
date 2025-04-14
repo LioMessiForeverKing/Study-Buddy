@@ -163,21 +163,30 @@ export default function ClassesPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 overflow-hidden relative">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full opacity-10">
+            <div className="absolute top-[10%] left-[5%] w-64 h-64 rounded-full bg-blue-400 mix-blend-multiply filter blur-3xl animate-float"></div>
+            <div className="absolute top-[40%] left-[25%] w-96 h-96 rounded-full bg-purple-400 mix-blend-multiply filter blur-3xl animate-pulse-slow"></div>
+            <div className="absolute top-[20%] right-[15%] w-72 h-72 rounded-full bg-green-400 mix-blend-multiply filter blur-3xl animate-pulse-slow"></div>
+            <div className="absolute bottom-[10%] right-[20%] w-80 h-80 rounded-full bg-yellow-400 mix-blend-multiply filter blur-3xl animate-float"></div>
+          </div>
+        </div>
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-lg">
+        <div className="w-64 bg-white/90 backdrop-blur-md shadow-xl z-10 border-r border-white/20">
           <div className="p-4">
             <Image src="/Yubi2.svg" alt="Yubi Mascot" width={150} height={150} className="mb-8" />
             <nav className="space-y-2">
-              <a href="/classes" className="flex items-center gap-2 p-2 bg-blue-50 text-blue-600 rounded">
+              <a href="/classes" className="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
                 <Home className="w-5 h-5" />
                 Classes
               </a>
-              <a href="/archive" className="flex items-center gap-2 p-2 text-gray-600 hover:bg-gray-50 rounded">
+              <a href="/archive" className="flex items-center gap-2 p-3 text-gray-700 hover:bg-white/80 hover:shadow-md rounded-lg transition-all duration-300">
                 <Archive className="w-5 h-5" />
                 Archive
               </a>
-              <a href="/settings" className="flex items-center gap-2 p-2 text-gray-600 hover:bg-gray-50 rounded">
+              <a href="/settings" className="flex items-center gap-2 p-3 text-gray-700 hover:bg-white/80 hover:shadow-md rounded-lg transition-all duration-300">
                 <Settings className="w-5 h-5" />
                 Settings
               </a>
@@ -186,7 +195,7 @@ export default function ClassesPage() {
           <div className="absolute bottom-0 left-0 w-64 p-4">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 w-full p-2 text-red-600 hover:bg-red-50 rounded"
+              className="flex items-center gap-2 w-full p-3 text-red-600 hover:bg-red-50/80 rounded-lg transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
             >
               <LogOut className="w-5 h-5" />
               Logout
@@ -195,15 +204,15 @@ export default function ClassesPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-8 py-8">
             {/* Header with Yubi Personalization */}
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
+            <div className="flex justify-between items-center mb-12">
+              <h1 className="text-4xl font-bold gradient-text">My Classes</h1>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setShowYubiPersonalization(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:translate-y-[-2px] transition-all duration-300"
                 >
                   <Sliders className="w-5 h-5" />
                   Customize Yubi
@@ -212,7 +221,7 @@ export default function ClassesPage() {
             </div>
 
             {needsOnboarding && (
-              <div className="mb-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="mb-8 p-6 glass-effect rounded-xl shadow-lg border border-purple-200/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Image src="/Yubi-happy.svg" alt="Yubi" width={40} height={40} />
@@ -220,7 +229,7 @@ export default function ClassesPage() {
                   </div>
                   <button
                     onClick={() => router.push('/settings/onboarding')}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="px-5 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg hover:translate-y-[-2px] transition-all duration-300"
                   >
                     Complete Setup
                   </button>
@@ -229,31 +238,31 @@ export default function ClassesPage() {
             )}
 
             {/* Classes Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 perspective-1000">
               {/* Add Class Card */}
               <div 
                 onClick={() => setIsAddingClass(true)}
-                className="bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-200 p-6 hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px]"
+                className="glass-effect rounded-2xl shadow-lg border-2 border-dashed border-white/40 p-8 hover:border-blue-400/70 hover:shadow-blue-200/50 hover:shadow-xl transition-all duration-500 cursor-pointer flex flex-col items-center justify-center min-h-[220px] transform hover:scale-[1.02] hover:rotate-1"
               >
-                <PlusCircle className="w-12 h-12 text-gray-400 mb-4" />
-                <p className="text-gray-600 font-medium">Add New Class</p>
+                <PlusCircle className="w-16 h-16 text-blue-500/70 mb-6 animate-pulse-slow" />
+                <p className="text-blue-600/80 font-medium text-lg">Add New Class</p>
               </div>
 
               {/* Existing Classes */}
               {classes.map((classItem) => (
-                <div key={classItem.id} className="bg-white rounded-lg shadow p-6">
+                <div key={classItem.id} className="glass-effect rounded-2xl shadow-lg p-8 border border-white/30 transform transition-all duration-500 hover:shadow-xl hover:scale-[1.02] hover:-rotate-1 group">
                   {editingClassId === classItem.id ? (
                     <div className="space-y-4">
                       <input
                         type="text"
                         value={newClassTitle}
                         onChange={(e) => setNewClassTitle(e.target.value)}
-                        className="w-full p-2 border rounded"
+                        className="w-full p-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
                       />
                       <textarea
                         value={newClassDescription}
                         onChange={(e) => setNewClassDescription(e.target.value)}
-                        className="w-full p-2 border rounded"
+                        className="w-full p-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 h-32"
                       />
                       <div className="flex gap-2">
                         <button
