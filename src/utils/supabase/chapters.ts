@@ -4,17 +4,21 @@ import type { Chapter } from '@/types/supabase'
 export const chaptersService = {
   async getChapters(classId: string) {
     const supabase = createClient()
+    console.log('Fetching chapters for classId:', classId)
+    
     const { data: chapters, error } = await supabase
       .from('chapters')
-      .select(`
-        *,
-        drawings(*)
-      `)
+      .select('*')
       .eq('class_id', classId)
       .order('order_index', { ascending: true })
 
-    if (error) throw error
-    return chapters
+    if (error) {
+      console.error('Error fetching chapters:', error)
+      throw error
+    }
+
+    console.log('Fetched chapters:', chapters)
+    return chapters || []
   },
 
   async addChapter(chapterData: {
@@ -24,16 +28,23 @@ export const chaptersService = {
     order_index: number
   }) {
     const supabase = createClient()
+    console.log('Adding chapter with data:', chapterData)
+
     const { data, error } = await supabase
       .from('chapters')
-      .insert({
+      .insert([{
         ...chapterData,
         updated_at: new Date().toISOString()
-      })
+      }])
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Error adding chapter:', error)
+      throw error
+    }
+
+    console.log('Added chapter:', data)
     return data
   },
 

@@ -17,7 +17,7 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null)
   const [newChapterTitle, setNewChapterTitle] = useState('')
   const [newChapterSubtitle, setNewChapterSubtitle] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false) // Changed to false initially
   const [error, setError] = useState<string | null>(null)
 
   const startEditingChapter = (chapter: Chapter) => {
@@ -33,15 +33,12 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
   }
 
   useEffect(() => {
+    console.log('ChapterManager mounted/updated with classId:', classId)
     loadChapters()
-    setupRealtimeSubscription()
-  }, [classId])
-
-  const setupRealtimeSubscription = () => {
-    const supabase = createClient()
     
+    const supabase = createClient()
     const channel = supabase
-      .channel(`chapters_changes_${classId}`) // Make channel name unique per class
+      .channel(`chapters_changes_${classId}`)
       .on('postgres_changes', 
         { 
           event: '*', 
@@ -49,52 +46,64 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
           table: 'chapters',
           filter: `class_id=eq.${classId}`
         }, 
-        (payload) => {
-          // Immediately load chapters when any change occurs
-          loadChapters()
+        async (payload) => {
+          console.log('Realtime update received:', payload)
+          // Always reload chapters on any change
+          await loadChapters()
         }
       )
       .subscribe()
 
     return () => {
+      console.log('Cleaning up subscription')
       supabase.removeChannel(channel)
     }
-  }
+  }, [classId])
 
   const loadChapters = async () => {
     try {
-      setIsLoading(true)
+      console.log('Loading chapters for classId:', classId)
       const data = await chaptersService.getChapters(classId)
-      setChapters(data)
-      setError(null)
+      console.log('Loaded chapters:', data)
+      const sortedChapters = (data || []).sort((a, b) => a.order_index - b.order_index)
+      setChapters(sortedChapters)
     } catch (err) {
-      console.error('Error loading chapters:', err)
-      setError('Failed to load chapters')
-    } finally {
-      setIsLoading(false)
+      console.error('Error in loadChapters:', err)
+      setChapters([])
     }
   }
 
   const addChapter = async () => {
-    if (newChapterTitle.trim() === '') return
-    
+    if (!newChapterTitle.trim()) return
+
     try {
+      setIsLoading(true)
+      const nextOrderIndex = chapters.length > 0 
+        ? Math.max(...chapters.map(ch => ch.order_index)) + 1 
+        : 0
+
+      console.log('Adding new chapter with order_index:', nextOrderIndex)
+      
       const newChapter = await chaptersService.addChapter({
         class_id: classId,
         title: newChapterTitle.trim(),
         subtitle: newChapterSubtitle.trim(),
-        order_index: chapters.length
+        order_index: nextOrderIndex
       })
+
+      console.log('New chapter added:', newChapter)
+
+      // Reload chapters instead of updating state directly
+      await loadChapters()
       
-      // Immediately update the local state with the new chapter
-      setChapters(prevChapters => [...prevChapters, newChapter])
-      
+      // Reset form
       setNewChapterTitle('')
       setNewChapterSubtitle('')
       setIsAddingChapter(false)
-    } catch (err) {
-      console.error('Error adding chapter:', err)
-      setError('Failed to add chapter')
+    } catch (error) {
+      console.error('Error adding chapter:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -125,16 +134,17 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
     }
   }
 
-  if (isLoading) {
-    return <div className="flex justify-center p-4">Loading chapters...</div>
-  }
-
-  if (error) {
-    return <div className="text-red-500 p-4">{error}</div>
-  }
+  // Add a debug render to see current state
+  console.log('Current chapters state:', chapters)
 
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+      
       <div className="flex justify-between items-center">
         <h1 
           className="text-4xl font-bold" 
@@ -200,55 +210,22 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
         )}
       </div>
 
-      <div className="space-y-6">
-        {chapters.map((chapter) => (
-          <div key={chapter.id} className="space-y-2">
-            {editingChapterId === chapter.id ? (
-              <div className="flex items-center gap-2 mb-4">
-                <div className="space-y-1">
-                  <label htmlFor={`editTitle-${chapter.id}`} className="block text-sm font-medium text-gray-700">
-                    Chapter Title
-                  </label>
-                  <input
-                    type="text"
-                    id={`editTitle-${chapter.id}`}
-                    value={newChapterTitle}
-                    onChange={(e) => setNewChapterTitle(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor={`editSubtitle-${chapter.id}`} className="block text-sm font-medium text-gray-700">
-                    Subtitle
-                  </label>
-                  <input
-                    type="text"
-                    id={`editSubtitle-${chapter.id}`}
-                    value={newChapterSubtitle}
-                    onChange={(e) => setNewChapterSubtitle(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div className="flex items-center gap-2 mt-6">
-                  <button
-                    onClick={() => saveChapterEdit(chapter.id)}
-                    disabled={!newChapterTitle.trim()}
-                    className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Check size={18} />
-                  </button>
-                  <button
-                    onClick={cancelEditing}
-                    className="p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex justify-between items-center mb-2">
+      {isLoading ? (
+        <div className="flex justify-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {chapters.map((chapter) => (
+            <div 
+              key={chapter.id}
+              className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-2xl font-bold">{chapter.title}</h2>
+                  <h3 className="text-lg font-semibold">
+                    Chapter {chapter.order_index + 1}: {chapter.title}
+                  </h3>
                   <p className="text-gray-600">{chapter.subtitle}</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -266,7 +243,6 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
                   </button>
                 </div>
               </div>
-            )}
             
             {/* DrawingBoard component for each chapter */}
             <div className="border-t border-gray-200 pt-4">
@@ -279,8 +255,15 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
               />
             </div>
           </div>
-        ))}
-      </div>
+          ))}
+          
+          {chapters.length === 0 && !isAddingChapter && (
+            <div className="text-center py-8 text-gray-500">
+              No chapters yet. Click "Add Chapter" to create your first chapter.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
