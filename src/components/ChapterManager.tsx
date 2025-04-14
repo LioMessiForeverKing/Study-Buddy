@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { DrawingBoard } from './DrawingBoard'
+import { SmartWorkspace } from './SmartWorkspace'
 import { PlusCircle, Edit2, Trash2, Check, X } from 'lucide-react'
 import { chaptersService } from '@/utils/supabase/chapters'
 import { createClient } from '@/utils/supabase/client'
@@ -81,22 +81,18 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
       const nextOrderIndex = chapters.length > 0 
         ? Math.max(...chapters.map(ch => ch.order_index)) + 1 
         : 0
-
-      console.log('Adding new chapter with order_index:', nextOrderIndex)
       
+      // Store the title without the "Chapter X:" prefix
       const newChapter = await chaptersService.addChapter({
         class_id: classId,
-        title: newChapterTitle.trim(),
+        title: newChapterTitle.trim(), // Just store the clean title
         subtitle: newChapterSubtitle.trim(),
         order_index: nextOrderIndex
       })
 
       console.log('New chapter added:', newChapter)
-
-      // Reload chapters instead of updating state directly
       await loadChapters()
       
-      // Reset form
       setNewChapterTitle('')
       setNewChapterSubtitle('')
       setIsAddingChapter(false)
@@ -216,46 +212,47 @@ export function ChapterManager({ classId }: ChapterManagerProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {chapters.map((chapter) => (
-            <div 
-              key={chapter.id}
-              className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    Chapter {chapter.order_index + 1}: {chapter.title}
-                  </h3>
-                  <p className="text-gray-600">{chapter.subtitle}</p>
+          {chapters.map((chapter) => {
+            // Clean up the title by removing any "Chapter X:" prefix
+            const cleanTitle = chapter.title.replace(/^Chapter\s+\d+:\s*/g, '');
+
+            return (
+              <div 
+                key={chapter.id}
+                className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Chapter {chapter.order_index + 1}: {cleanTitle}
+                    </h3>
+                    <p className="text-gray-600">{chapter.subtitle}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => startEditingChapter(chapter)}
+                      className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => deleteChapter(chapter.id)}
+                      className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => startEditingChapter(chapter)}
-                    className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => deleteChapter(chapter.id)}
-                    className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <SmartWorkspace 
+                    chapterId={chapter.id}
+                    classId={classId}
+                  />
                 </div>
               </div>
-            
-            {/* DrawingBoard component for each chapter */}
-            <div className="border-t border-gray-200 pt-4">
-              <DrawingBoard 
-                chapterId={chapter.id}
-                classId={classId}
-                key={chapter.id} 
-                title={chapter.title} 
-                subtitle={chapter.subtitle || ''} 
-              />
-            </div>
-          </div>
-          ))}
+            );
+          })}
           
           {chapters.length === 0 && !isAddingChapter && (
             <div className="text-center py-8 text-gray-500">

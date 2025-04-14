@@ -219,6 +219,8 @@ export function Canvas({
 
   // Load saved drawing when component mounts
   useEffect(() => {
+    // Temporarily disabled loading saved drawings
+    /*
     const loadSavedDrawing = async () => {
       try {
         const savedDrawing = await chaptersService.getDrawing(chapterId)
@@ -232,10 +234,13 @@ export function Canvas({
     }
 
     loadSavedDrawing()
+    */
   }, [chapterId])
 
   // Save drawing when pages or current page changes
   useEffect(() => {
+    // Temporarily disabled auto-save functionality
+    /*
     const saveDrawing = async () => {
       try {
         await chaptersService.saveDrawing({
@@ -253,6 +258,7 @@ export function Canvas({
 
     const debounceTimer = setTimeout(saveDrawing, 1000) // Debounce save
     return () => clearTimeout(debounceTimer)
+    */
   }, [pages, currentPageIndex, chapterId, classId])
 
   // Initialize canvas when component mounts or when page changes
