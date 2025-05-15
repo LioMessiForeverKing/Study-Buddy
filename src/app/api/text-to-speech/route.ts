@@ -12,8 +12,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Eleven Labs API configuration
-    const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY || 'your-api-key';
-    const VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Example voice ID (you can change this)
+    const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;
+    if (!ELEVEN_LABS_API_KEY) {
+      console.error("Missing Eleven Labs API key");
+      return new Response(JSON.stringify({ error: 'API key configuration error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Example voice ID
 
     // Make request to Eleven Labs API
     const response = await fetch(
@@ -37,7 +45,9 @@ export async function POST(request: NextRequest) {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to generate speech');
+      const errorData = await response.text();
+      console.error("Eleven Labs API error:", response.status, errorData);
+      throw new Error(`Failed to generate speech: ${response.status} ${errorData}`);
     }
 
     // Get the audio data as an ArrayBuffer
