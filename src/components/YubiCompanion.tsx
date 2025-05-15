@@ -335,11 +335,13 @@ export default function YubiCompanion() {
     const userName = userSettings?.display_name || stats.name
     const educationLevel = userSettings?.education_level
     const studyGoals = userSettings?.study_goals || []
+    const interests = personalization?.interests || []
     
     console.log('Generating response with user context:', {
       name: userName,
       educationLevel,
-      studyGoals
+      studyGoals,
+      interests
     })
 
     // Check for custom prompts first
@@ -351,25 +353,30 @@ export default function YubiCompanion() {
       return customPrompt.response;
     }
 
-    // Otherwise generate contextual response based on personalization
+    // If no interests are available, use specific fallback interests
+    const userInterests = interests.length > 0 ? interests : ['soccer', 'Iron Man', 'prompt engineering'];
+    const primaryInterest = userInterests[0];
+    const secondaryInterest = userInterests.length > 1 ? userInterests[1] : userInterests[0];
+    const tertiaryInterest = userInterests.length > 2 ? userInterests[2] : userInterests[0];
+    
+    // Otherwise generate contextual response based on personalization and interests
     const style = personalization?.communicationStyle || 'Encouraging & Supportive'
-    const interests = personalization?.interests || []
     
     console.log('Using communication style:', style);
-    console.log('Available interests:', interests);
+    console.log('Using interests for personalization:', userInterests);
     
-    // Add personality to responses based on communication style
+    // Add personality to responses based on communication style and interests
     switch (style) {
       case 'Encouraging & Supportive':
-        return `You're doing great! Let's keep learning about ${interests[0] || 'this topic'}! 💪`
+        return `You're doing great with ${primaryInterest}! Just like ${tertiaryInterest} requires practice, connecting ${primaryInterest} with ${secondaryInterest} will deepen your understanding! 💪`
       case 'Direct & Concise':
-        return `Focus on the key concepts. Ready to continue?`
+        return `Focus on ${primaryInterest} fundamentals. Think how ${secondaryInterest} and ${tertiaryInterest} connect with similar principles. Ready to continue?`
       case 'Humorous & Playful':
-        return `Hey there! Did you hear about the math book that was sad? It had too many problems! 😄`
+        return `If ${primaryInterest} was in an ${secondaryInterest} movie, they'd need ${tertiaryInterest} skills to save the day! 😄 Let's explore these connections!`
       case 'Socratic & Questioning':
-        return `What aspects of ${interests[0] || 'this topic'} interest you the most? Let's explore deeper!`
+        return `How might ${primaryInterest} techniques relate to both ${secondaryInterest} and ${tertiaryInterest}? What patterns connect these interests?`
       default:
-        return `Let's keep learning together!`
+        return `Let's explore how ${primaryInterest}, ${secondaryInterest}, and ${tertiaryInterest} connect to enhance your learning journey!`
     }
   }
 
