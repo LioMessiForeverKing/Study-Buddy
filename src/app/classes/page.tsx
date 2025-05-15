@@ -22,6 +22,7 @@ import YubiPersonalization from '@/components/YubiPersonalization'
 import { createClient } from '@/utils/supabase/client'
 import { classesService } from '@/utils/supabase/classes'
 import type { Class } from '@/types/supabase'
+import { getUserSettings } from '@/utils/supabase/user-settings'
 
 const yubiVariants = [
   '/Yubi1.svg',
@@ -43,14 +44,15 @@ export default function ClassesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAddingClass, setIsAddingClass] = useState(false)
   const [showYubiPersonalization, setShowYubiPersonalization] = useState(false)
-  const [needsOnboarding, setNeedsOnboarding] = useState(false)
+  const [needsOnboarding, setNeedsOnboarding] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     loadClasses()
-
+    checkOnboardingStatus()
+    
     // Set up real-time subscription
     const channel = supabase
       .channel('classes_changes')
@@ -82,6 +84,16 @@ export default function ClassesPage() {
       console.error(err)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const userSettings = await getUserSettings()
+      setNeedsOnboarding(!userSettings || !userSettings.display_name)
+    } catch (err) {
+      console.error('Error checking onboarding status:', err)
+      setNeedsOnboarding(true)
     }
   }
 
