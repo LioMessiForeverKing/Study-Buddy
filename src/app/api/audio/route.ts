@@ -281,11 +281,26 @@ User Preferences:
 
     const result = await chatSession.sendMessage(messageParts);
     
-    // Process response
-    const responseText = result.response.text();
+    // Process response - clean up special characters for TTS
+    let responseText = result.response.text();
+    
+    // Clean the response text for TTS by removing markdown symbols and code formatting
+    const ttsCleanedText = responseText
+      .replace(/\*\*/g, '') // Remove bold markers
+      .replace(/\*/g, '')   // Remove italic markers
+      .replace(/`{3}[\s\S]*?`{3}/g, 'Code snippet removed for speech.') // Replace code blocks
+      .replace(/`([^`]+)`/g, '$1') // Remove inline code markers but keep the content
+      .replace(/#{1,6}\s/g, '') // Remove heading markers
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Replace links with just the text
+      .replace(/\n\s*[-*+]\s/g, '\n• ') // Replace list markers with bullet point
+      .replace(/\n\s*\d+\.\s/g, '\n• '); // Replace numbered lists with bullet points
+    
     console.log('Successfully processed audio with Gemini');
     
-    return new Response(JSON.stringify({ analysis: responseText }), {
+    return new Response(JSON.stringify({ 
+      analysis: responseText,
+      ttsText: ttsCleanedText // Add cleaned text for TTS
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

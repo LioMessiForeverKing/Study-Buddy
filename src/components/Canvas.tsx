@@ -208,7 +208,8 @@ export function Canvas({
       // Update the conversation history with properly typed messages
       setConversationHistory([...updatedHistory, assistantMessage]);
       
-      speakText(data.analysis);
+      // Use the cleaned text for TTS instead of the raw analysis
+      speakText(data.ttsText || data.analysis);
     } catch (error) {
       console.error('Error processing audio:', error);
       setAnalysis('Error processing audio. Please try again.');
