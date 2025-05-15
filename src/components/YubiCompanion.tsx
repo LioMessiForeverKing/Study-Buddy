@@ -69,7 +69,7 @@ export default function YubiCompanion() {
     labels: ['Visual', 'Auditory', 'Reading/Writing', 'Kinesthetic'],
     datasets: [{
       label: 'Learning Style Analysis',
-      data: [65, 40, 85, 30],
+      data: [25, 40, 20, 15],
       backgroundColor: ['#4285F4', '#34A853', '#FBBC05', '#EA4335'],
       borderWidth: 0,
     }]
@@ -451,7 +451,7 @@ export default function YubiCompanion() {
                 />
               </div>
               <p className="text-sm text-gray-600 mt-2">
-                You're primarily a <span className="font-bold text-blue-600">Reading/Writing</span> learner, 
+                You're primarily an <span className="font-bold text-green-600">Auditory</span> learner, 
                 with strong <span className="font-bold text-blue-600">Visual</span> tendencies.
               </p>
               <div className="mt-3 p-3 bg-blue-50 rounded-lg">
