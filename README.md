@@ -2,6 +2,8 @@
 
 StudyBuddy is an intelligent learning platform designed to transform education through personalized AI tutoring, interactive tools, and adaptive learning experiences. By combining cutting-edge AI technology with proven educational methodologies, StudyBuddy empowers students to learn at their own pace, stay organized, and remain engaged.
 
+Got 2000 users, before my supabase crashed:)
+
 ## Key Features
 
 - **Personalized AI Tutoring**: Leverage Google's Gemini AI to create customized learning experiences based on individual learning styles
